@@ -30,17 +30,17 @@ test('plank is timed, pull-up is bodyweight', () => {
   assert.equal(byId('pull-up').bodyweight, true);
 });
 
-import { normalizeKeyframes, posedJoints, fitBox } from '../js/rig.js';
+import { normalizeKeyframes, posedJoints, fitBox, solvePose, forwardKinematicsFront, DIMS } from '../js/rig.js';
 test('every exercise animation stays inside its fitted, square frame', () => {
   for (const e of EXERCISES) {
     assert.ok(e.anim && e.anim.keyframes.length >= 1, `${e.id} has no animation`);
     const box = fitBox(e.anim);
     assert.equal(box.w, box.h, `${e.id} frame must be square`);
     if (!e.anim.noFloor) assert.ok(box.y + box.h >= 184, `${e.id} floor must be visible`);
-    if (e.anim.view === 'front') continue;
     const kfs = normalizeKeyframes(e.anim.keyframes);
     for (let t = 0; t < 1; t += 0.05) {
-      const j = posedJoints(e.anim, kfs, t);
+      const f = e.anim.view === 'front' ? forwardKinematicsFront(solvePose(e.anim, kfs, t), e.anim.anchor, DIMS, e.anim.seated) : null;
+      const j = f ? {head: f.head, pelvis: f.pelvis, ...Object.fromEntries(Object.entries(f.right).map(([k,v])=>['right-'+k,v])), ...Object.fromEntries(Object.entries(f.left).map(([k,v])=>['left-'+k,v]))} : posedJoints(e.anim, kfs, t);
       for (const [name, p] of Object.entries(j)) {
         assert.ok(p.x >= box.x && p.x <= box.x + box.w && p.y >= box.y && p.y <= box.y + box.h,
           `${e.id} ${name} out of frame at t=${t.toFixed(2)}: ${p.x.toFixed(0)},${p.y.toFixed(0)}`);

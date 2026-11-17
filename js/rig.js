@@ -9,7 +9,7 @@
 // The anchor joint stays fixed in the 200×200 viewBox (e.g. ankle for squats, hip for bench).
 
 export const DIMS = { trunk: 52, neck: 15, headR: 10, uArm: 30, fArm: 28, thigh: 42, shin: 40, foot: 14 };
-export const POSE_KEYS = ['trunk', 'head', 'uArm', 'fArm', 'thigh', 'shin', 'foot', 'uArm2', 'fArm2', 'thigh2', 'shin2', 'foot2'];
+export const POSE_KEYS = ['trunk', 'curl', 'head', 'uArm', 'fArm', 'thigh', 'shin', 'foot', 'uArm2', 'fArm2', 'thigh2', 'shin2', 'foot2'];
 const FAR = { uArm2: 'uArm', fArm2: 'fArm', thigh2: 'thigh', shin2: 'shin', foot2: 'foot' };
 
 const rad = d => (d * Math.PI) / 180;
@@ -52,7 +52,8 @@ export function samplePose(kfs, t) {
 /** Side-view joint positions. anchor = {joint, x, y}. */
 export function forwardKinematics(pose, anchor = { joint: 'hip', x: 100, y: 100 }, dims = DIMS) {
   const hip = { x: 0, y: 0 };
-  const shoulder = add(hip, vec(pose.trunk, dims.trunk));
+  const spine = add(hip, vec(pose.trunk, dims.trunk / 2));
+  const shoulder = add(spine, vec(pose.trunk + (pose.curl || 0), dims.trunk / 2));
   const head = add(shoulder, vec(pose.head ?? pose.trunk, dims.neck));
   const elbow = add(shoulder, vec(pose.uArm, dims.uArm));
   const wrist = add(elbow, vec(pose.fArm, dims.fArm));
@@ -64,7 +65,7 @@ export function forwardKinematics(pose, anchor = { joint: 'hip', x: 100, y: 100 
   const knee2 = add(hip, vec(pose.thigh2 ?? pose.thigh, dims.thigh));
   const ankle2 = add(knee2, vec(pose.shin2 ?? pose.shin, dims.shin));
   const toe2 = add(ankle2, vec(pose.foot2 ?? pose.foot ?? 90, dims.foot));
-  const j = { hip, shoulder, head, elbow, wrist, knee, ankle, toe, elbow2, wrist2, knee2, ankle2, toe2 };
+  const j = { hip, spine, shoulder, head, elbow, wrist, knee, ankle, toe, elbow2, wrist2, knee2, ankle2, toe2 };
   const ref = j[anchor.joint] || hip;
   const dx = anchor.x - ref.x, dy = anchor.y - ref.y;
   for (const k of Object.keys(j)) j[k] = { x: j[k].x + dx, y: j[k].y + dy };
@@ -72,18 +73,20 @@ export function forwardKinematics(pose, anchor = { joint: 'hip', x: 100, y: 100 
 }
 
 /** Front view: compute the right side, mirror for the left. Returns {right, left, neck, head, pelvis}. */
-export function forwardKinematicsFront(pose, anchor = { x: 100, y: 178 }, dims = DIMS) {
+export function forwardKinematicsFront(pose, anchor = { x: 100, y: 178 }, dims = DIMS, seated = false) {
   const half = { shoulder: 15, hip: 8 };
   // build relative to pelvis centre (0,0)
   const hipR = { x: half.hip, y: 0 };
-  const kneeR = add(hipR, vec(pose.thigh, dims.thigh));
+  const kneeR = seated
+    ? {x: hipR.x + Math.sin(rad(pose.thigh)) * 29, y: 18}
+    : add(hipR, vec(pose.thigh, dims.thigh));
   const ankleR = add(kneeR, vec(pose.shin, dims.shin));
   const neck = { x: 0, y: -dims.trunk };
   const shoulderR = { x: half.shoulder, y: -dims.trunk + 4 };
   const elbowR = add(shoulderR, vec(pose.uArm, dims.uArm));
   const wristR = add(elbowR, vec(pose.fArm, dims.fArm));
   const head = { x: 0, y: -dims.trunk - dims.neck };
-  const dy = anchor.y - ankleR.y, cx = anchor.x;
+  const dy = seated ? anchor.y : anchor.y - ankleR.y, cx = anchor.x;
   const T = p => ({ x: cx + p.x, y: p.y + dy });
   const M = p => ({ x: cx - p.x, y: p.y + dy });
   const r = { hip: hipR, knee: kneeR, ankle: ankleR, shoulder: shoulderR, elbow: elbowR, wrist: wristR };
@@ -114,18 +117,38 @@ export function legIK(hip, ankle, bend = 'front', dims = DIMS) {
   return { thigh: r.a1, shin: r.a2 };
 }
 
-/** Pose at t with pins applied. A pin keeps a hand (limb:'arm') or ankle (limb:'leg') fixed on a target point. */
+/** Pose at t with pins applied. Pins accept a fixed target, a looping point track,
+ * a relativeTo joint, and an optional near/far side. Null target axes stay free.
+ * A pin keeps a hand (limb:'arm') or ankle (limb:'leg') fixed on a target point. */
 export function solvePose(anim, kfs, t) {
   const pose = samplePose(kfs, t);
+  if (anim.shoulderRail != null) {
+    const j = forwardKinematics(pose, anim.anchor);
+    pose.trunk = Math.asin(Math.max(-1, Math.min(1, (anim.shoulderRail - j.hip.x) / DIMS.trunk))) * 180 / Math.PI;
+  }
   for (const pin of anim.pins || []) {
     const j = forwardKinematics(pose, anim.anchor);
-    const target = { x: pin.target[0], y: pin.target[1] };
+    const track = pin.track;
+    let point = pin.target;
+    if (track) {
+      const phase = ((t % 1) + 1) % 1;
+      let i = track.length - 1;
+      for (let k = 0; k < track.length; k++) if (track[k].t <= phase) i = k;
+      const a = track[i], b = track[(i + 1) % track.length];
+      const span = (b.t - a.t + 1) % 1 || 1;
+      const u = ease(((phase - a.t + 1) % 1) / span);
+      point = a.point.map((v, axis) => v + (b.point[axis] - v) * u);
+    }
+    const end = j[pin.limb === 'arm' ? 'wrist' : 'ankle'];
+    const relative = pin.relativeTo ? j[pin.relativeTo] : {x:0,y:0};
+    const target = { x: point[0] == null ? end.x : point[0] + relative.x, y: point[1] == null ? end.y : point[1] + relative.y };
+    const suffixes = pin.side === 'far' ? ['2'] : pin.side === 'near' ? [''] : ['', '2'];
     if (pin.limb === 'arm') {
       const r = twoBoneIK(j.shoulder, target, DIMS.uArm, DIMS.fArm, pin.bend);
-      pose.uArm = pose.uArm2 = r.a1; pose.fArm = pose.fArm2 = r.a2;
+      for (const suffix of suffixes) { pose['uArm' + suffix] = r.a1; pose['fArm' + suffix] = r.a2; }
     } else if (pin.limb === 'leg') {
       const r = twoBoneIK(j.hip, target, DIMS.thigh, DIMS.shin, pin.bend);
-      pose.thigh = pose.thigh2 = r.a1; pose.shin = pose.shin2 = r.a2;
+      for (const suffix of suffixes) { pose['thigh' + suffix] = r.a1; pose['shin' + suffix] = r.a2; }
     }
   }
   return pose;
@@ -140,7 +163,7 @@ export function fitBox(anim, samples = 40) {
   for (let i = 0; i < samples; i++) {
     const pose = solvePose(anim, kfs, i / samples);
     if (anim.view === 'front') {
-      const f = forwardKinematicsFront(pose, anim.anchor);
+      const f = forwardKinematicsFront(pose, anim.anchor, DIMS, anim.seated);
       pts.push(f.head, ...Object.values(f.right), ...Object.values(f.left));
     } else {
       pts.push(...Object.values(forwardKinematics(pose, anim.anchor)));
@@ -150,12 +173,12 @@ export function fitBox(anim, samples = 40) {
     if (p.from) pts.push({ x: p.from[0], y: p.from[1] });
     if (p.to) pts.push({ x: p.to[0], y: p.to[1] });
     if (p.type === 'bench') pts.push({ x: p.x, y: p.y }, { x: p.x + p.w, y: p.y });
-    if (p.type === 'pullupBar') pts.push({ x: p.x, y: p.y - 6 });
+    if (p.type === 'pullupBar') pts.push({ x: p.x - 60, y: p.y - 6 }, { x: p.x + 60, y: p.y - 6 });
   }
-  const pad = 18; // head radius + plates
+  const pad = 28; // head radius + plates
   const x0 = Math.min(...pts.map(p => p.x)) - pad, x1 = Math.max(...pts.map(p => p.x)) + pad;
   const y0 = Math.min(...pts.map(p => p.y)) - pad;
-  const y1 = anim.noFloor ? Math.max(...pts.map(p => p.y)) + pad : 186; // floor (y=180) sits near the bottom
+  const y1 = anim.noFloor ? Math.max(...pts.map(p => p.y)) + pad : Math.max(186, ...pts.map(p => p.y + 10)); // floor (y=180) sits near the bottom
   const size = Math.ceil(Math.max(x1 - x0, y1 - y0));
   const cx = (x0 + x1) / 2;
   return { x: Math.round(cx - size / 2), y: Math.round(y1 - size), w: size, h: size };

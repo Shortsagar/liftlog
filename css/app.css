@@ -284,6 +284,9 @@ a.chip { text-decoration: none; }
 .figure .fig-far { stroke: var(--figure-dim); fill: none; }
 .figure .fig-head { fill: var(--figure); }
 .figure .fig-torso { fill: var(--figure); stroke: var(--figure); stroke-width: 6; stroke-linejoin: round; }
+.figure .m-neutral { fill: color-mix(in srgb, var(--figure) 72%, var(--surface)); stroke: var(--figure-dim); stroke-width: .45; }
+.figure .fig-joint { fill: var(--figure-dim); stroke: var(--figure); stroke-width: .7; }
+.figure .fig-feature { fill: var(--surface); }
 .figure .m-p { fill: var(--primary-muscle); }
 .figure .m-s { fill: var(--secondary-muscle); }
 .figure .m-far { opacity: .45; }

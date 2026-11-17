@@ -39,3 +39,7 @@ Reviewed November 16, 2026. Scope: local application source, storage and backup 
 - `git diff --check`: passed.
 
 To release: build, review `dist/`, deploy it to a dedicated HTTPS origin, verify response headers and lack of exposed private files at the live URL, and accept the app update on installed clients. Provider account protection and public identity settings require a separate account-level review.
+
+## Commit identity prevention follow-up
+
+Public main history was rewritten to the gamer tag and GitHub noreply email. Old commit URLs may still expose prior identity metadata retained by GitHub; these controls cannot erase copies already published. Local commit/merge and push hooks now require the approved author, committer and annotated-tagger identity. Push verification scans all ancestors to catch reintroduced historical identities. Run `npm run privacy:setup` on each new clone. Five isolated regression checks verify accepted identities and rejection of author/committer overrides, unsafe ancestors and unsafe taggers. Global Git defaults on this computer use the same gamer tag and noreply email; repository-specific overrides on other projects can supersede them.

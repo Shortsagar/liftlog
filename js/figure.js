@@ -1,7 +1,7 @@
 // Renders a rig animation as inline SVG. One shared requestAnimationFrame loop drives every
 // visible figure; off-screen figures pause automatically. Elements are created once and only
 // their attributes change per frame.
-import { normalizeKeyframes, solvePose, forwardKinematics, forwardKinematicsFront, fitBox, vec } from './rig.js';
+import { normalizeKeyframes, solvePose, forwardKinematics, forwardKinematicsFront, fitBox, vec, DIMS } from './rig.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 const W = { trunk: 20, neck: 7, uArm: 10, fArm: 8, thigh: 15, shin: 11, foot: 6 };
@@ -36,11 +36,11 @@ function prep(ex) {
 }
 
 /** Build the list of drawing ops for a pose. Order and count depend only on the clip, never the pose. */
-function opsFor(ex, pose) {
+export function opsFor(ex, pose) {
   const anim = ex.anim;
-  const roles = new Map();
+  const roles = new Map(Object.keys(SIDE).map(m => [m, 'neutral']));
   for (const m of ex.primary) roles.set(m, 'p');
-  for (const m of ex.secondary) if (!roles.has(m)) roles.set(m, 's');
+  for (const m of ex.secondary) if (roles.get(m) !== 'p') roles.set(m, 's');
   return anim.view === 'front' ? frontOps(anim, pose, roles) : sideOps(anim, pose, roles);
 }
 
@@ -107,7 +107,13 @@ function propOps(anim, joints, layer) {
       }
     } else {
       if (p.type === 'barbell') { ops.push(circle(pos, p.r || 16, 'prop-plate')); ops.push(circle(pos, 2.5, 'prop-solid')); }
-      if (p.type === 'dumbbell') { ops.push(circle(pos, 6.5, 'prop-plate')); ops.push(circle(pos, 2, 'prop-solid')); }
+      if (p.type === 'dumbbell') {
+        if (p.grip === 'neutral') {
+          const v = vec(anim.gripAngle ?? 0, 8);
+          ops.push(line({x:pos.x-v.x,y:pos.y-v.y},{x:pos.x+v.x,y:pos.y+v.y},3,'prop'));
+          for (const sign of [-1,1]) ops.push(line({x:pos.x+sign*v.x-5,y:pos.y+sign*v.y},{x:pos.x+sign*v.x+5,y:pos.y+sign*v.y},4,'prop'));
+        } else { ops.push(circle(pos, 6.5, 'prop-plate')); ops.push(circle(pos, 2, 'prop-solid')); }
+      }
       if (p.type === 'bar') ops.push(circle(pos, 3, 'prop-solid'));
       if (p.type === 'roller') ops.push(circle(pos, 6, 'prop-plate'));
       if (p.type === 'plate') {
@@ -130,23 +136,31 @@ function sideOps(anim, pose, roles) {
   ops.push(line(j.knee2, j.ankle2, W.shin, 'fig-far'), line(j.ankle2, j.toe2, W.foot, 'fig-far'), line(j.hip, j.knee2, W.thigh, 'fig-far'));
   ops.push(line(j.shoulder, j.elbow2, W.uArm, 'fig-far'), line(j.elbow2, j.wrist2, W.fArm, 'fig-far'));
   ops.push(...muscleOps(far, roles, ['uArm', 'fArm', 'thigh', 'shin'], ' m-far'));
-  ops.push(...(anim.props || []).filter(p => p.at === 'wrist' && p.type === 'dumbbell' && !anim.oneArm).flatMap(p => [circle(j.wrist2, 6.5, 'prop-plate prop-far')]));
+  ops.push(...(anim.props || []).filter(p => p.at === 'wrist' && p.type === 'dumbbell' && p.grip !== 'neutral' && !anim.oneArm).flatMap(p => [circle(j.wrist2, 6.5, 'prop-plate prop-far')]));
   // body
   const near = segInfo(j, pose, false);
   const neckEnd = lerp(j.shoulder, j.head, 0.45);
-  ops.push(line(j.hip, j.shoulder, W.trunk, 'fig'), line(j.shoulder, neckEnd, W.neck, 'fig'), circle(j.head, 10, 'fig-head'));
+  ops.push(line(j.hip, j.spine, W.trunk, 'fig'), line(j.spine, j.shoulder, W.trunk, 'fig'), line(j.shoulder, neckEnd, W.neck, 'fig'), circle(j.head, 10, 'fig-head'));
   ops.push(...muscleOps(near, roles, ['trunk', 'neck']));
   ops.push(line(j.hip, j.knee, W.thigh, 'fig'), line(j.knee, j.ankle, W.shin, 'fig'), line(j.ankle, j.toe, W.foot, 'fig'));
   ops.push(...muscleOps(near, roles, ['thigh', 'shin']));
   ops.push(line(j.shoulder, j.elbow, W.uArm, 'fig'), line(j.elbow, j.wrist, W.fArm, 'fig'));
   ops.push(...muscleOps(near, roles, ['uArm', 'fArm']));
+  for (const point of [j.elbow, j.knee]) ops.push(circle(point, 2.3, 'fig-joint'));
+  ops.push(circle(j.wrist, 3.2, 'fig-head'));
+  const face = vec((pose.head ?? pose.trunk) + 90, 8);
+  ops.push(circle({x: j.head.x + face.x, y: j.head.y + face.y}, 1.3, 'fig-feature'));
   ops.push(...propOps(anim, j, 'front'));
   return ops;
 }
 
 function frontOps(anim, pose, roles) {
-  const f = forwardKinematicsFront(pose, anim.anchor);
+  const f = forwardKinematicsFront(pose, anim.anchor, DIMS, anim.seated);
   const ops = [line({ x: -400, y: 180 }, { x: 600, y: 180 }, 1.5, 'floor')];
+  if (anim.seated) {
+    ops.push(line({x: f.pelvis.x - 24, y: f.neck.y + 5}, {x: f.pelvis.x - 24, y: f.pelvis.y + 9}, 7, 'prop-pad'));
+    ops.push(line({x: f.pelvis.x - 29, y: f.pelvis.y + 9}, {x: f.pelvis.x + 29, y: f.pelvis.y + 9}, 8, 'prop-pad'));
+  }
   for (const s of [f.left, f.right]) ops.push(line(s.hip, s.knee, W.thigh, 'fig'), line(s.knee, s.ankle, W.shin, 'fig'));
   ops.push({ tag: 'polygon', cls: 'fig-torso', a: { points: [f.left.shoulder, f.right.shoulder, f.right.hip, f.left.hip].map(p => `${p.x},${p.y}`).join(' ') } });
   ops.push(line(f.neck, lerp(f.neck, f.head, 0.5), W.neck, 'fig'), circle(f.head, 10, 'fig-head'));
@@ -171,7 +185,12 @@ function frontOps(anim, pose, roles) {
     if (has('adductors')) { const a = lerp(s.hip, s.knee, 0.35); ops.push(ellipse({ x: a.x - out * 4, y: a.y }, 2.5, 9, 0, `m-${has('adductors')}`)); }
     if (has('calves')) ops.push(segA(s.knee, s.ankle, 0.1, 0.55, 3.5, `m-${has('calves')}`));
   }
-  if (has('abs')) ops.push(ellipse({ x: f.pelvis.x, y: f.pelvis.y - 19 }, 5.5, 12, 0, `m-${has('abs')}`));
+  for (const y of [12, 20, 28]) for (const x of [-3, 3]) ops.push(ellipse({x: f.pelvis.x + x, y: f.pelvis.y - y}, 2.4, 3.3, 0, `m-${has('abs')}`));
+  for (const s of [f.left, f.right]) {
+    ops.push(circle(s.elbow, 2.3, 'fig-joint'), circle(s.knee, 2.3, 'fig-joint'), circle(s.wrist, 3.2, 'fig-head'));
+    ops.push(line(s.ankle, {x: s.ankle.x + (s === f.left ? -8 : 8), y: s.ankle.y + 2}, 6, 'fig'));
+    if (anim.seated) ops.push(line({x:s.knee.x + (s === f.left ? -7 : 7), y:s.knee.y - 6}, {x:s.knee.x + (s === f.left ? -7 : 7), y:s.knee.y + 6}, 5, 'prop-pad'));
+  }
   for (const p of anim.props || []) if (p.type === 'dumbbell') for (const s of [f.left, f.right]) ops.push(circle(s.wrist, 6, 'prop-plate'), circle(s.wrist, 2, 'prop-solid'));
   return ops;
 }
@@ -206,7 +225,7 @@ export function createFigure(ex, { autoplay = !reducedMotion(), className = '', 
   g.setAttribute('stroke-linecap', 'round');
   svg.append(g);
   let els = [];
-  let playing = autoplay, visible = false, phase = 0.5, last = null;
+  let playing = autoplay, visible = false, phase = startPhase ?? (autoplay ? 0 : 0.5), last = null;
 
   const draw = t => {
     const ops = opsFor(ex, solvePose(ex.anim, kfs, t));
@@ -242,8 +261,7 @@ export function createFigure(ex, { autoplay = !reducedMotion(), className = '', 
     if (playing && visible) { last = null; running.add(fig); kick(); } else running.delete(fig);
   }
   svg.__fig = fig;
-  if (startPhase != null) phase = startPhase;
-  draw(startPhase ?? (autoplay ? 0 : 0.5)); // paused figures show the hardest point of the rep
+  draw(phase); // paused figures show the hardest point of the rep
   if (io) io.observe(svg); else fig.setVisible(true);
   return fig;
 }

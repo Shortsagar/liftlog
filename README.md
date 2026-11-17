@@ -148,3 +148,7 @@ The localStorage backend stores one atomic JSON snapshot and uses Web Locks when
 See `SECURITY.md` for the review scope, fixes, deployment checks and remaining risks. Browser storage and exported backups are not encrypted by LiftLog. Anyone with access to the unlocked browser profile can read them. Hosting providers can observe IP addresses and request metadata when the app loads or updates. Do not put names, addresses, contact details or private locations in notes you intend to share. Reset removes the current installation's data, but exported files, device backups and legacy migration copies may remain; clear site data to remove browser copies across installations.
 
 The explicit public inventory is `tools/public-assets.json`. Review and update it when adding app assets, then rebuild. Never add backups, credentials or private notes to that inventory.
+
+## Commit identity protection
+
+Use `shortsagar` and `314394435+Shortsagar@users.noreply.github.com` for both Git author and committer. After cloning, run `npm run privacy:setup` to activate this repository's tracked hooks. They reject different commit identities and scan all pushed ancestors plus annotated taggers. Run `npm run test:identity` to test the protections. Hooks are local controls: GitHub web edits, another clone without setup, or explicitly bypassing hooks can evade them. Do not use `--no-verify` or disable hooks to get around a privacy rejection.

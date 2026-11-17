@@ -1,6 +1,6 @@
 // LiftLog service worker: precaches the whole app so it runs fully offline.
 // VERSION and PRECACHE are maintained by tools/build-sw.mjs — run it after changing app files.
-const VERSION = 'a254e426d5';
+const VERSION = '8638108545';
 const CACHE_PREFIX = `liftlog-${encodeURIComponent(self.registration.scope)}-`;
 const CACHE = `${CACHE_PREFIX}${VERSION}`;
 const PRECACHE = [

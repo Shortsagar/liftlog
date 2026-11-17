@@ -9,6 +9,8 @@
     "icons": "node tools/make-icons.mjs",
     "dist": "node tools/dist.mjs",
     "test:browser": "node tools/browser-test.mjs",
-    "test:server": "python3 -B tests/server_test.py"
+    "test:server": "python3 -B tests/server_test.py",
+    "privacy:setup": "node tools/setup-git-privacy.mjs",
+    "test:identity": "python3 -B tests/git_identity_test.py"
   }
 }
