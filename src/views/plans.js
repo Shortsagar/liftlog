@@ -1,6 +1,6 @@
 // Plan library.
 import { h, icon, pageHead } from '../ui.js';
-import { PLANS } from '../../data/plans.js';
+import { PLANS } from '../../database/plans.js';
 import { customPlans, activeContext } from '../plan-store.js';
 import { progress } from '../plans.js';
 import { startWorkout } from '../repo.js';

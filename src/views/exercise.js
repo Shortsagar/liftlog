@@ -1,7 +1,7 @@
 // Per-exercise progress: bests, chart of top-set weight + estimated 1RM, PR history, recent sessions.
 import { h, icon, pageHead, fmtDate } from '../ui.js';
 import { app } from '../state.js';
-import { byId } from '../../data/exercises.js';
+import { byId } from '../../database/exercises.js';
 import { allSessions } from '../repo.js';
 import { toDisplay, setLabel, prLabel, repsBased } from '../model.js';
 import { exerciseSeries, bestEver } from '../progress.js';

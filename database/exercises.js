@@ -10,7 +10,7 @@
 //   metric     'reps' or 'seconds' (timed holds like plank)
 //   bodyweight true if load is your body (weight field = added weight, usually 0)
 //   anim       looping form animation for the figure rig — see ANIMATIONS at the bottom of this file
-//              and js/rig.js for the angle conventions. New exercise = new keyframes, no new artwork.
+//              and src/rig.js for the angle conventions. New exercise = new keyframes, no new artwork.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const MUSCLES = {
@@ -305,7 +305,7 @@ export const EXERCISES = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ANIMATIONS — one looping clip per exercise, driven by the figure rig (js/rig.js).
+// ANIMATIONS — one looping clip per exercise, driven by the figure rig (src/rig.js).
 //   Angles (degrees, screen space): 0 = up, 90 = forward (figure faces right), 180 = down, 270 = back.
 //   pose keys: trunk curl (optional spinal flexion) head uArm fArm thigh shin foot  (+ uArm2 fArm2 thigh2 shin2 foot2 for the far side)
 //   anchor: the joint pinned in the 200×200 frame (ankle | hip | wrist | toe).  Floor is y = 180.

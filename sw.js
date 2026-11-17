@@ -1,54 +1,54 @@
 // LiftLog service worker: precaches the whole app so it runs fully offline.
 // VERSION and PRECACHE are maintained by tools/build-sw.mjs — run it after changing app files.
-const VERSION = '4fa7b0cc33';
+const VERSION = 'c41455a619';
 const CACHE_PREFIX = `liftlog-${encodeURIComponent(self.registration.scope)}-`;
 const CACHE = `${CACHE_PREFIX}${VERSION}`;
 const PRECACHE = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './css/app.css',
-  './data/exercises.js',
-  './data/plans.js',
+  './src/css/app.css',
+  './database/exercises.js',
+  './database/plans.js',
   './icons/apple-touch-icon.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
   './icons/icon.svg',
-  './js/app.js',
-  './js/backup.js',
-  './js/celebrate.js',
-  './js/chart.js',
-  './js/db.js',
-  './js/demo.js',
-  './js/figure.js',
-  './js/lifecycle.js',
-  './js/machines.js',
-  './js/model.js',
-  './js/picker.js',
-  './js/plan-store.js',
-  './js/plans.js',
-  './js/progress.js',
-  './js/repo.js',
-  './js/rig.js',
-  './js/save-queue.js',
-  './js/state.js',
-  './js/timer-core.js',
-  './js/timer.js',
-  './js/ui.js',
-  './js/validation.js',
-  './js/views/body.js',
-  './js/views/exercise.js',
-  './js/views/library.js',
-  './js/views/log.js',
-  './js/views/plan-detail.js',
-  './js/views/plan-edit.js',
-  './js/views/plans.js',
-  './js/views/progress.js',
-  './js/views/session.js',
-  './js/views/settings.js',
-  './js/views/today.js',
-  './js/workout.js',
+  './src/app.js',
+  './src/backup.js',
+  './src/celebrate.js',
+  './src/chart.js',
+  './src/db.js',
+  './src/demo.js',
+  './src/figure.js',
+  './src/lifecycle.js',
+  './src/machines.js',
+  './src/model.js',
+  './src/picker.js',
+  './src/plan-store.js',
+  './src/plans.js',
+  './src/progress.js',
+  './src/repo.js',
+  './src/rig.js',
+  './src/save-queue.js',
+  './src/state.js',
+  './src/timer-core.js',
+  './src/timer.js',
+  './src/ui.js',
+  './src/validation.js',
+  './src/views/body.js',
+  './src/views/exercise.js',
+  './src/views/library.js',
+  './src/views/log.js',
+  './src/views/plan-detail.js',
+  './src/views/plan-edit.js',
+  './src/views/plans.js',
+  './src/views/progress.js',
+  './src/views/session.js',
+  './src/views/settings.js',
+  './src/views/today.js',
+  './src/workout.js',
 ];
 
 self.addEventListener('install', event => {
@@ -64,7 +64,10 @@ self.addEventListener('activate', event => {
       // Retain empty, mixed, or unfamiliar caches whose ownership is ambiguous.
       else if (/^liftlog-[0-9a-f]{10}$/.test(key)) {
         const reqs = await (await caches.open(key)).keys();
-        const ownURLs = new Set(PRECACHE.map(p => new URL(p, self.registration.scope).href));
+        // Legacy caches predate the src/ + database/ layout, so also accept each
+        // asset's pre-move path (js/, css/, data/).
+        const legacyPath = p => p.replace(/^\.\/src\/css\//, './css/').replace(/^\.\/src\//, './js/').replace(/^\.\/database\//, './data/');
+        const ownURLs = new Set(PRECACHE.flatMap(p => [p, legacyPath(p)]).map(p => new URL(p, self.registration.scope).href));
         const shell = new URL('./index.html', self.registration.scope).href;
         if (reqs.some(r => r.url === shell) && reqs.every(r => ownURLs.has(r.url))) await caches.delete(key);
       }

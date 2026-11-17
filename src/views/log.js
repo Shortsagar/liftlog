@@ -1,7 +1,7 @@
 // The logging screen — the hot path. Keep it fast: no full re-render on typing.
 import { h, icon, modal, confirmDialog, fmtDuration, toast, saveJSONFile } from '../ui.js';
 import { app, weightInc, go } from '../state.js';
-import { byId } from '../../data/exercises.js';
+import { byId } from '../../database/exercises.js';
 import { toDisplay, fromDisplay, parseNum, detectPRs, setLabel, bestSet } from '../model.js';
 import { addSet, makeEntry, finalizeSession, targetLow, defaultTarget, propagate, stepBase } from '../workout.js';
 import * as rest from '../timer.js';

@@ -2,7 +2,7 @@ import { disposeTree } from '../lifecycle.js';
 // Progress tab: overview (week, plan, volume, body), history, exercises.
 import { h, icon, pageHead, fmtDate, fmtDuration } from '../ui.js';
 import { app } from '../state.js';
-import { byId } from '../../data/exercises.js';
+import { byId } from '../../database/exercises.js';
 import { allSessions } from '../repo.js';
 import { activeContext } from '../plan-store.js';
 import { progress as planProgress } from '../plans.js';

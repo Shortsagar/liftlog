@@ -1,7 +1,7 @@
 import { integer, validExerciseTarget } from './validation.js';
 // Building and finalizing workout sessions (pure).
 import { lastPerformance } from './model.js';
-import { byId } from '../data/exercises.js';
+import { byId } from '../database/exercises.js';
 
 export const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 

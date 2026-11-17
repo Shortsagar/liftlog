@@ -1,7 +1,7 @@
 // Session detail / post-workout summary.
 import { h, icon, pageHead, fmtDate, fmtDuration, confirmDialog, toast } from '../ui.js';
 import { app, go } from '../state.js';
-import { byId } from '../../data/exercises.js';
+import { byId } from '../../database/exercises.js';
 import { sessionVolume, setLabel, prLabel, toDisplay } from '../model.js';
 import { getSession, deleteSession } from '../repo.js';
 import { celebratePRs } from '../celebrate.js';

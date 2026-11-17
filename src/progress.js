@@ -1,6 +1,6 @@
 // Progress analytics (pure): per-exercise series, bests, weekly volume, trends, axis ticks, sample data.
 import { epley, sessionVolume, weekStart, detectPRs, repsBased, LB } from './model.js';
-import { builtInPlan } from '../data/plans.js';
+import { builtInPlan } from '../database/plans.js';
 import { targetLow } from './workout.js';
 
 const done = sets => (sets || []).filter(s => s.done && s.r > 0);
