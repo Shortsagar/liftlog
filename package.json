@@ -1,0 +1,12 @@
+{
+  "name": "liftlog",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "start": "python3 tools/serve.py 8080",
+    "build-sw": "node tools/build-sw.mjs",
+    "icons": "node tools/make-icons.mjs",
+    "dist": "node tools/dist.mjs"
+  }
+}
