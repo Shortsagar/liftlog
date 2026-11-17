@@ -85,3 +85,24 @@ test('activation removes the pre-scope cache of this installation only', async (
   let done; handlers.activate({ waitUntil: p => done = p }); await done;
   assert.deepEqual(deleted, ['liftlog-12e3b44079']);
 });
+
+for (const scope of ['https://example.test/', 'https://example.test/app/']) {
+  test(`legacy cleanup preserves nested and ambiguous caches under ${scope}`, async () => {
+    const handlers = {}, deleted = [];
+    const entries = {
+      'liftlog-1111111111': [scope + 'index.html', scope + 'js/app.js'],
+      'liftlog-2222222222': [scope + 'other/index.html', scope + 'other/js/app.js'],
+      'liftlog-3333333333': [scope + 'index.html', scope + 'other/index.html'],
+      'liftlog-4444444444': [],
+      'liftlog-5555555555': [scope + 'js/app.js'],
+      'liftlog-6666666666': [scope + 'index.html', scope + 'unknown.js'],
+    };
+    vm.runInNewContext(swSrc(), {
+      self: { registration: { scope }, clients: { claim: async () => {} }, addEventListener: (name, fn) => handlers[name] = fn },
+      caches: { keys: async () => Object.keys(entries), delete: async key => deleted.push(key),
+        open: async key => ({ keys: async () => entries[key].map(url => ({ url })) }) }, URL,
+    });
+    let done; handlers.activate({ waitUntil: promise => done = promise }); await done;
+    assert.deepEqual(deleted, ['liftlog-1111111111']);
+  });
+}

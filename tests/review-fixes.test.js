@@ -91,3 +91,41 @@ test('revertDelta steps back over a freshly pushed entry or across a back/forwar
   assert.equal(revertDelta({ idx: 2 }, 4), 2);     // user pressed Back twice
   assert.equal(revertDelta({ idx: 5 }, 4), -1);    // user pressed Forward once
 });
+
+import { targetLow, newSession, addSet, finalizeSession } from '../js/workout.js';
+import { importAll } from '../js/backup.js';
+
+test('free-form targets only prefill positive reps within the backup schema limit', () => {
+  for (const target of ['1000001', '9'.repeat(40), '0', 'AMRAP', '9'.repeat(400)]) {
+    assert.equal(targetLow(target), null, target);
+  }
+  for (const [target, expected] of [['1000000', 1000000], ['10+', 10], ['8–12', 8], ['30s', 30], ['12 each side', 12]]) {
+    assert.equal(targetLow(target), expected, target);
+  }
+});
+
+test('oversized target labels remain usable and draft and finished backups round-trip', async () => {
+  for (const reps of ['1000001', '9'.repeat(40), 'AMRAP']) {
+    const db = await openStore(memoryBackend());
+    const plan = buildCustomPlan({ id: 'custom-target', name: 'Target test', weeks: 1,
+      days: [{ name: 'Day 1', exercises: [{ exId: 'squat', sets: 1, reps }] }] });
+    await db.put('plans', plan);
+    const draft = newSession({ name: 'Target test', exercises: plan.weeks[0].days[0].exercises }, [], 1000);
+    assert.equal(draft.exercises[0].sets[0].r, null);
+    addSet(draft.exercises[0]);
+    assert.equal(draft.exercises[0].sets[1].r, null);
+    await db.kvSet('draft', draft);
+    const draftBackup = await exportAll(db);
+    assert.equal(validateBackup(draftBackup), null);
+    const restored = await openStore(memoryBackend());
+    await importAll(restored, draftBackup);
+    assert.deepEqual(await restored.kvGet('draft'), draft);
+    draft.exercises[0].sets[0] = { w: 60, r: 8, done: true };
+    const session = finalizeSession(draft, 2000);
+    await db.put('sessions', session); await db.kvSet('draft', null);
+    const finishedBackup = await exportAll(db);
+    assert.equal(validateBackup(finishedBackup), null);
+    await importAll(restored, finishedBackup);
+    assert.deepEqual(await restored.get('sessions', session.id), session);
+  }
+});

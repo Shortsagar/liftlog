@@ -1,4 +1,4 @@
-import { validExerciseTarget } from './validation.js';
+import { integer, validExerciseTarget } from './validation.js';
 // Building and finalizing workout sessions (pure).
 import { lastPerformance } from './model.js';
 import { byId } from '../data/exercises.js';
@@ -9,7 +9,9 @@ export const newId = () => Date.now().toString(36) + Math.random().toString(36).
 export function targetLow(reps) {
   if (reps == null) return null;
   const m = String(reps).match(/\d+/);
-  return m ? Number(m[0]) : null;
+  const value = m ? Number(m[0]) : null;
+  // Keep free-form labels, but never prefill a value that backups cannot restore.
+  return integer(value, 1, 1e6) ? value : null;
 }
 
 export function defaultTarget(exId) {

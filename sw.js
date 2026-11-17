@@ -1,6 +1,6 @@
 // LiftLog service worker: precaches the whole app so it runs fully offline.
 // VERSION and PRECACHE are maintained by tools/build-sw.mjs — run it after changing app files.
-const VERSION = '9d8328705e';
+const VERSION = '44ebc3a77d';
 const CACHE_PREFIX = `liftlog-${encodeURIComponent(self.registration.scope)}-`;
 const CACHE = `${CACHE_PREFIX}${VERSION}`;
 const PRECACHE = [
@@ -58,11 +58,14 @@ self.addEventListener('activate', event => {
   event.waitUntil((async () => {
     for (const key of await caches.keys()) {
       if (key.startsWith(CACHE_PREFIX) && key !== CACHE) await caches.delete(key);
-      // Caches from before per-installation names ("liftlog-<hash>"): delete only if every
-      // entry belongs to this installation, so another install's offline copy survives.
+      // Legacy caches have no scope in their name. Require this installation's
+      // exact shell and asset URLs; a root-scope prefix also matches nested apps.
+      // Retain empty, mixed, or unfamiliar caches whose ownership is ambiguous.
       else if (/^liftlog-[0-9a-f]{10}$/.test(key)) {
         const reqs = await (await caches.open(key)).keys();
-        if (reqs.every(r => r.url.startsWith(self.registration.scope))) await caches.delete(key);
+        const ownURLs = new Set(PRECACHE.map(p => new URL(p, self.registration.scope).href));
+        const shell = new URL('./index.html', self.registration.scope).href;
+        if (reqs.some(r => r.url === shell) && reqs.every(r => ownURLs.has(r.url))) await caches.delete(key);
       }
     }
     await self.clients.claim();
