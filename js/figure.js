@@ -167,6 +167,8 @@ function frontOps(anim, pose, roles) {
     if (has('biceps') || has('triceps')) ops.push(segA(s.shoulder, s.elbow, 0.3, 0.9, 3.4, `m-${has('biceps') || has('triceps')}`));
     if (has('forearms')) ops.push(segA(s.elbow, s.wrist, 0.1, 0.65, 3, `m-${has('forearms')}`));
     if (has('quads')) ops.push(segA(s.hip, s.knee, 0.15, 0.9, 4.5, `m-${has('quads')}`));
+    if (has('glutes')) ops.push(ellipse({ x: s.hip.x + out * 5, y: s.hip.y - 2 }, 3, 6, 0, `m-${has('glutes')}`));
+    if (has('adductors')) { const a = lerp(s.hip, s.knee, 0.35); ops.push(ellipse({ x: a.x - out * 4, y: a.y }, 2.5, 9, 0, `m-${has('adductors')}`)); }
     if (has('calves')) ops.push(segA(s.knee, s.ankle, 0.1, 0.55, 3.5, `m-${has('calves')}`));
   }
   if (has('abs')) ops.push(ellipse({ x: f.pelvis.x, y: f.pelvis.y - 19 }, 5.5, 12, 0, `m-${has('abs')}`));

@@ -69,7 +69,17 @@ export async function runChecks(){
   const weight=doc.querySelector('input[data-field="w"]');weight.value='135';weight.dispatchEvent(new Event('input',{bubbles:true}));
   for(const check of doc.querySelectorAll('.check'))check.click();
   await wait(()=>[...doc.querySelectorAll('[role="status"]')].some(e=>e.textContent==='Saved'),'Draft did not save');
-  const state = await frame.contentWindow.eval("import('/js/state.js')");
+  const injection = doc.createElement('script');
+  injection.textContent = 'window.__injected = true';
+  doc.head.append(injection);
+  assert(!frame.contentWindow.__injected, 'CSP allowed inline script injection');
+  let blocked = false;
+  try { frame.contentWindow.eval('1 + 1'); } catch { blocked = true; }
+  assert(blocked, 'CSP allowed eval');
+  const probe = doc.createElement('script');probe.type = 'module';probe.src = '/tests/state-probe.js';
+  doc.head.append(probe);
+  const state = await wait(()=>frame.contentWindow.__testState, 'Test state probe did not load');
+  results.push('CSP blocks inline scripts and eval while app modules work');
   const atomic = state.app.db.atomic;
   state.app.db.atomic = async()=>{throw Error('Injected storage failure');};
   title.value='Unsaved workout';title.dispatchEvent(new Event('input',{bubbles:true}));

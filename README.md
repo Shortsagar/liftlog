@@ -1,10 +1,10 @@
 # LiftLog: offline workout tracker
 
-A BodySpace-style workout tracker that runs entirely on your phone. It has no backend, no account, no API keys, and no network calls after the first load. It installs to your home screen and works in airplane mode.
+A BodySpace-style workout tracker that runs entirely on your phone. It has no backend, no account, no API keys, and no automatic uploads of workout data (online visits can check for app updates). It installs to your home screen and works in airplane mode.
 
-- **Plans:** 5 free starter plans (Full Body Beginner, Push/Pull/Legs, Upper/Lower 4-day, 5×5 Strength, Dumbbell-only Home), your own custom plans, and one-off workouts. "Today's workout" tracks which week and day you're on.
+- **Plans:** 5 free starter plans (Full Body Beginner, Push/Pull/Legs, Upper/Lower 4-day, 5×5 Strength, Dumbbell-only Home), 2 gym plans built for Planet Fitness–style equipment (Gym Machine Full Body, Gym Upper / Lower: Smith machine, selectorized machines, assisted pull-up/dip, abductor/adductor, cables and dumbbells), your own custom plans, and one-off workouts. "Today's workout" tracks which week and day you're on.
 - **Fast logging:** weight and reps steppers, a numeric keypad, sets pre-filled from last time ("Last: 135 × 8"), add/remove/swap, notes, an auto rest timer, and a workout clock. Edits are saved within a fraction of a second (rapid typing is grouped into one write, and anything pending is written immediately when you leave the screen or switch apps). The log shows Saving, Saved, or a failure with retry and backup controls.
-- **Form guides:** a looping SVG figure for each of 31 exercises, with primary and secondary muscles highlighted and form cues. Tap to enlarge, with pause/play.
+- **Form guides:** a looping SVG figure for each of 44 exercises, with primary and secondary muscles highlighted and form cues. Tap to enlarge, with pause/play.
 - **Progress:** history, a per-exercise chart of top set and estimated 1RM (Epley), automatic PR detection with a little celebration, a weekly summary (workouts, volume, streak), plan progress, and a bodyweight trend.
 - **Your data:** stored on the device in IndexedDB, with a localStorage fallback. You can export and import a JSON backup.
 
@@ -63,29 +63,12 @@ Both options give you an `https://` address. Offline mode and installing to the 
 1. Create a free account at github.com, then click **New repository**. Name it something like `liftlog`, make it **Public** (free Pages needs public), and click **Create repository**.
 2. Put the files in the repository.
    - **Without git:** on the new repo page, click **uploading an existing file**. Open the `dist` folder from step A1 and drag its *contents* (not the folder itself) into the browser, then click **Commit changes**.
-   - **With git** (from this folder):
-     ```bash
-     git init
-     ```
-     ```bash
-     git add .
-     ```
-     ```bash
-     git commit -m "LiftLog"
-     ```
-     ```bash
-     git branch -M main
-     ```
-     ```bash
-     git remote add origin https://github.com/YOUR-USERNAME/liftlog.git
-     ```
-     ```bash
-     git push -u origin main
-     ```
-     (`.gitignore` keeps out `dist/` and the private `.remember/` notes. The app runs from the repo root, so tests and tools are pushed too, which is harmless.)
+   - Publish only the generated `dist` contents in a separate deployment repository. Do not upload this workspace or its Git history. Git commits contain author/committer names and email addresses; use a privacy-preserving hosting identity and Git email before publishing. Public account names and domains may also identify you.
 3. In the repo, go to **Settings → Pages**. Under **Build and deployment**, set **Source: Deploy from a branch**, **Branch: `main`**, **Folder: `/ (root)`**, then click **Save**.
 4. Wait about a minute and refresh. The page shows your address: `https://YOUR-USERNAME.github.io/liftlog/`.
 5. To update later: upload the changed files (or `git push`). See "Changing the app" first.
+
+For stronger isolation, host LiftLog on its own HTTPS origin, separate from other apps. Paths and separate database names do not isolate data from other JavaScript on the same origin. The generated `_headers` enables security headers on Netlify; other hosts need equivalent configuration. GitHub Pages does not apply that file. The HTML includes a fallback content security policy, but embedding protection requires response headers.
 
 All paths in the app are relative, so it works in a sub-folder such as `/liftlog/` with no configuration.
 
@@ -159,3 +142,9 @@ tools/             dev server, icon generator, sw builder, dist builder, animati
 ```
 
 The localStorage backend stores one atomic JSON snapshot and uses Web Locks when available to coordinate windows. On older browsers without Web Locks, use one app window at a time. Its cost grows with history size; IndexedDB is preferred. Service-worker freshness tests are read-only (`node tools/build-sw.mjs --check`).
+
+## Privacy and security
+
+See `SECURITY.md` for the review scope, fixes, deployment checks and remaining risks. Browser storage and exported backups are not encrypted by LiftLog. Anyone with access to the unlocked browser profile can read them. Hosting providers can observe IP addresses and request metadata when the app loads or updates. Do not put names, addresses, contact details or private locations in notes you intend to share. Reset removes the current installation's data, but exported files, device backups and legacy migration copies may remain; clear site data to remove browser copies across installations.
+
+The explicit public inventory is `tools/public-assets.json`. Review and update it when adding app assets, then rebuild. Never add backups, credentials or private notes to that inventory.

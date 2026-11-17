@@ -1,12 +1,12 @@
 """Serve app assets only. LAN access requires the explicit --lan option."""
 import argparse
+import json
 import http.server
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parent.parent
-FILES = {'index.html', 'manifest.webmanifest', 'sw.js', 'tools/anim-preview.html'}
-DIRECTORIES = {'css', 'js', 'data', 'icons'}
+FILES = set(json.loads((ROOT / 'tools/public-assets.json').read_text())) | {'sw.js', 'tools/anim-preview.html'}
 
 class NoCache(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -17,7 +17,9 @@ class NoCache(http.server.SimpleHTTPRequestHandler):
         parts = Path(relative).parts
         if any(p.startswith('.') for p in parts):
             return False
-        if relative not in FILES and (not parts or parts[0] not in DIRECTORIES):
+        if relative not in FILES:
+            return False
+        if any((ROOT.joinpath(*parts[:i])).is_symlink() for i in range(1, len(parts) + 1)):
             return False
         target = (ROOT / relative).resolve()
         return target.is_relative_to(ROOT) and target.is_file()
@@ -34,7 +36,12 @@ class NoCache(http.server.SimpleHTTPRequestHandler):
 
     def end_headers(self):
         self.send_header('Cache-Control', 'no-store')
-        self.send_header('X-Content-Type-Options', 'nosniff')
+        for line in (ROOT / '_headers').read_text().splitlines()[1:]:
+            name, value = line.strip().split(': ', 1)
+            # The developer animation preview contains a local inline script.
+            if name == 'Content-Security-Policy' and urlsplit(self.path).path == '/tools/anim-preview.html':
+                continue
+            self.send_header(name, value)
         super().end_headers()
 
 if __name__ == '__main__':

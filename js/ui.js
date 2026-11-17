@@ -11,7 +11,7 @@ function build(ns, tag, attrs, kids) {
     });
     else if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
     else if (k === 'dataset') Object.assign(el.dataset, v);
-    else if (k === 'html') el.innerHTML = v;
+    else if (k === 'html') throw new Error('Raw HTML is not supported; use text children');
     else if (!ns && (k === 'value' || k === 'checked' || k === 'disabled')) el[k] = v;
     else el.setAttribute(k === 'className' ? 'class' : k, v === true ? '' : v);
   }

@@ -5,7 +5,7 @@ import { h, pageHead, toast } from '../ui.js';
 import { app, saveSettings, go } from '../state.js';
 import { fmtDuration, confirmDialog } from '../ui.js';
 import { makeSampleHistory } from '../progress.js';
-import { exportAll, importAll, validateBackup, backupFilename } from '../backup.js';
+import { exportAll, importAll, readBackupFile, backupFilename } from '../backup.js';
 import { requestPersistence } from '../app.js';
 import { icon, fmtDate, saveJSONFile } from '../ui.js';
 
@@ -24,9 +24,7 @@ async function importBackup(fileInput) {
   fileInput.value = '';
   if (!f) return;
   let obj;
-  try { obj = JSON.parse(await f.text()); } catch { toast('That file isn\'t valid JSON'); return; }
-  const problem = validateBackup(obj);
-  if (problem) { toast(`Not a LiftLog backup (${problem})`, { ms: 3500 }); return; }
+  try { obj = await readBackupFile(f); } catch (e) { toast(e.message, { ms: 3500 }); return; }
   const ok = await confirmDialog(`Replace ALL data on this device with the backup from ${fmtDate(obj.exportedAt, { month: 'short', day: 'numeric', year: 'numeric' })}? It has ${obj.sessions.length} workout${obj.sessions.length === 1 ? '' : 's'}, ${obj.plans.length} custom plan${obj.plans.length === 1 ? '' : 's'} and ${obj.bodyweight.length} weigh-in${obj.bodyweight.length === 1 ? '' : 's'}. Current data on this device will be overwritten.`, { ok: 'Replace & restore', danger: true });
   if (!ok) return;
   await importAll(app.db, obj);
@@ -56,7 +54,7 @@ async function dataSection() {
     h('div', { class: `card stack ${stale ? 'backup-nudge' : ''}` },
       h('p', { class: 'small', style: { margin: 0 } },
         h('b', {}, last ? `Last backup ${daysAgo(last) === 0 ? 'today' : `${daysAgo(last)} days ago`}` : 'Never backed up'),
-        h('span', { class: 'muted' }, ` · ${sessions.length} workouts on this device. Everything stays on this phone — export a backup now and then, and to move to a new phone.`)),
+        h('span', { class: 'muted' }, ` · ${sessions.length} workouts on this device. Data is stored in this browser without app-level encryption. Backups include workout dates, notes and weigh-ins in readable JSON; share them only with people or storage you trust.`)),
       h('div', { class: 'row' },
         h('button', { class: 'btn primary grow', onClick: exportBackup }, icon('download'), 'Export backup'),
         h('button', { class: 'btn grow', onClick: () => fileIn.click() }, icon('upload'), 'Import'), fileIn)),

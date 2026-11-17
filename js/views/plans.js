@@ -26,13 +26,16 @@ export function planCard(p, { active, ctx } = {}) {
 export async function render() {
   const [custom, ctx] = await Promise.all([customPlans(), activeContext()]);
   const activeId = ctx?.plan.id;
-  const others = PLANS.filter(p => p.id !== activeId);
+  const others = PLANS.filter(p => p.id !== activeId && !p.gym);
+  const gym = PLANS.filter(p => p.id !== activeId && p.gym);
 
   return h('div', {},
     pageHead('Plans'),
     ctx ? h('div', {}, h('div', { class: 'section-title', style: { marginTop: 0 } }, 'Your plan'), planCard(ctx.plan, { active: true, ctx })) : null,
     h('div', { class: 'section-title' }, 'Free plans'),
     ...others.map(p => planCard(p)),
+    gym.length ? h('div', { class: 'section-title' }, 'Gym plans · Planet Fitness equipment') : null,
+    ...gym.map(p => planCard(p)),
     h('div', { class: 'section-title' }, 'My plans'),
     ...custom.filter(p => p.id !== activeId).map(p => planCard(p)),
     h('div', { class: 'stack', style: { marginTop: custom.length ? '12px' : 0 } },

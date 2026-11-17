@@ -1,17 +1,14 @@
+import { publicAssets } from './public-assets.mjs';
 // Refreshes sw.js: the PRECACHE file list and a VERSION hash of all app files.
 // Run after changing any app file:  node tools/build-sw.mjs   (or: npm run build-sw)
 // A new VERSION makes phones download the update and show "Update ready".
-import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
-const walk = dir => readdirSync(join(ROOT, dir)).sort().flatMap(f => {
-  const p = `${dir}/${f}`;
-  return statSync(join(ROOT, p)).isDirectory() ? walk(p) : [p];
-});
-const files = ['index.html', 'manifest.webmanifest', ...walk('css'), ...walk('js'), ...walk('data'), ...walk('icons')];
+const files = publicAssets(ROOT);
 const hash = createHash('sha256');
 for (const f of files) hash.update(f).update(readFileSync(join(ROOT, f)));
 const normalizedSW = readFileSync(join(ROOT, 'sw.js'), 'utf8').replace(/const VERSION = '[^']*';/, "const VERSION = '';").replace(/const PRECACHE = \[[\s\S]*?\];/, 'const PRECACHE = [];');

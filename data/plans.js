@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // STARTER PLANS — plain data, edit freely.
-// Plan  = { id, name, summary, level, daysPerWeek, builtIn, weeks: [ { days: [ Day ] } ] }
+// Plan  = { id, name, summary, level, daysPerWeek, builtIn, gym?, weeks: [ { days: [ Day ] } ] }   gym: shown under "Gym plans"
 // Day   = { name, exercises: [ { exId, sets, reps } ] }   reps: number or "8-12" or "30s"
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -37,6 +37,17 @@ const dbA = D('Home A', E('goblet-squat', 3, '12'), E('db-bench-press', 3, '10')
 const dbB = D('Home B', E('db-rdl', 3, '10'), E('push-up', 3, '8-15'), E('lunge', 3, '10'), E('lateral-raise', 3, '12'), E('db-curl', 3, '12'), E('overhead-triceps-ext', 3, '12'));
 const dbC = D('Home C', E('bulgarian-split-squat', 3, '10'), E('incline-db-press', 3, '10'), E('db-row', 3, '12'), E('hammer-curl', 3, '12'), E('plank', 3, '45s'));
 
+// ── Gym plans: built around Planet Fitness–style equipment ──
+// Smith machines, selectorized machines, cable stations, assisted pull-up/dip, dumbbells — no squat racks or free barbells.
+const pfA = D('Machine Day A', E('chest-press-machine', 3, '10-12'), E('machine-row', 3, '10-12'), E('leg-press', 3, '10-12'), E('shoulder-press-machine', 2, '10-12'), E('seated-leg-curl', 2, '12'), E('ab-crunch-machine', 2, '15'));
+const pfB = D('Machine Day B', E('smith-squat', 3, '8-10'), E('lat-pulldown', 3, '10-12'), E('smith-bench-press', 3, '8-10'), E('leg-extension', 2, '12'), E('hip-abduction', 2, '15'), E('back-extension', 2, '12'));
+const pfC = D('Machine Day C', E('leg-press', 3, '12'), E('assisted-pull-up', 3, '6-10'), E('chest-press-machine', 3, '12'), E('seated-cable-row', 2, '12'), E('machine-biceps-curl', 2, '12'), E('triceps-pushdown', 2, '12'), E('calf-raise', 3, '15'));
+
+const pfUpA = D('Upper A', E('smith-bench-press', 4, '6-8'), E('machine-row', 4, '8-10'), E('shoulder-press-machine', 3, '8-10'), E('lat-pulldown', 3, '10'), E('assisted-dip', 3, '8-12'), E('machine-biceps-curl', 3, '10-12'));
+const pfLoA = D('Lower A', E('smith-squat', 4, '6-8'), E('db-rdl', 3, '8-10'), E('leg-press', 3, '10-12'), E('seated-leg-curl', 3, '10-12'), E('calf-raise', 4, '12-15'));
+const pfUpB = D('Upper B', E('incline-db-press', 3, '8-10'), E('assisted-pull-up', 4, '6-10'), E('chest-press-machine', 3, '10-12'), E('seated-cable-row', 3, '10-12'), E('lateral-raise', 3, '15'), E('face-pull', 3, '15'), E('triceps-pushdown', 3, '12'));
+const pfLoB = D('Lower B', E('leg-press', 4, '10'), E('bulgarian-split-squat', 3, '10'), E('leg-extension', 3, '12-15'), E('hip-abduction', 3, '15'), E('hip-adduction', 3, '15'), E('back-extension', 3, '12'), E('ab-crunch-machine', 3, '15'));
+
 export const PLANS = [
   { id: 'full-body-beginner', name: 'Full Body Beginner', level: 'Beginner', daysPerWeek: 3, builtIn: true,
     summary: 'Three full-body sessions a week. Learn the main lifts and build a base. Add weight when you hit all reps.',
@@ -53,6 +64,12 @@ export const PLANS = [
   { id: 'dumbbell-home', name: 'Dumbbell-only Home', level: 'Beginner', daysPerWeek: 3, builtIn: true,
     summary: 'Three home sessions using just a pair of dumbbells (and a bench if you have one).',
     weeks: repeatWeeks(8, () => [dbA, dbB, dbC]) },
+  { id: 'gym-machine-circuit', name: 'Gym Machine Full Body', level: 'Beginner', daysPerWeek: 3, builtIn: true, gym: 'Planet Fitness',
+    summary: 'Three full-body days on the machines you\'ll find at Planet Fitness: chest press, row, leg press, Smith machine, assisted pull-up and the abductor. Easy to learn, easy to load.',
+    weeks: repeatWeeks(8, () => [pfA, pfB, pfC]) },
+  { id: 'gym-upper-lower', name: 'Gym Upper / Lower', level: 'Intermediate', daysPerWeek: 4, builtIn: true, gym: 'Planet Fitness',
+    summary: 'Four days for a Planet Fitness–style gym. Smith machine bench and squat anchor the heavy days; machines, cables and dumbbells fill in the volume.',
+    weeks: repeatWeeks(8, () => [pfUpA, pfLoA, pfUpB, pfLoB]) },
 ];
 
 export const builtInPlan = id => PLANS.find(p => p.id === id);

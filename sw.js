@@ -1,6 +1,6 @@
 // LiftLog service worker: precaches the whole app so it runs fully offline.
 // VERSION and PRECACHE are maintained by tools/build-sw.mjs — run it after changing app files.
-const VERSION = '44ebc3a77d';
+const VERSION = 'a254e426d5';
 const CACHE_PREFIX = `liftlog-${encodeURIComponent(self.registration.scope)}-`;
 const CACHE = `${CACHE_PREFIX}${VERSION}`;
 const PRECACHE = [
@@ -8,6 +8,13 @@ const PRECACHE = [
   './index.html',
   './manifest.webmanifest',
   './css/app.css',
+  './data/exercises.js',
+  './data/plans.js',
+  './icons/apple-touch-icon.png',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/icon-maskable-512.png',
+  './icons/icon.svg',
   './js/app.js',
   './js/backup.js',
   './js/celebrate.js',
@@ -41,13 +48,6 @@ const PRECACHE = [
   './js/views/settings.js',
   './js/views/today.js',
   './js/workout.js',
-  './data/exercises.js',
-  './data/plans.js',
-  './icons/apple-touch-icon.png',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
-  './icons/icon-maskable-512.png',
-  './icons/icon.svg',
 ];
 
 self.addEventListener('install', event => {

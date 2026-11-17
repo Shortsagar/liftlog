@@ -18,7 +18,7 @@ export const MUSCLES = {
   traps: 'Traps', upperBack: 'Upper Back', lats: 'Lats', lowerBack: 'Lower Back',
   biceps: 'Biceps', triceps: 'Triceps', forearms: 'Forearms',
   abs: 'Abs', obliques: 'Obliques',
-  glutes: 'Glutes', quads: 'Quads', hamstrings: 'Hamstrings', calves: 'Calves',
+  glutes: 'Glutes', quads: 'Quads', hamstrings: 'Hamstrings', adductors: 'Inner Thighs', calves: 'Calves',
 };
 
 const ex = (id, name, equipment, primary, secondary, cues, opts = {}) =>
@@ -222,6 +222,86 @@ export const EXERCISES = [
     'Squeeze glutes, tuck ribs down',
     'Breathe — don\'t hold your breath',
   ], { metric: 'seconds', bodyweight: true }),
+
+  // ── Gym machines (Planet Fitness–style floor: Smith machines, selectorized and plate-loaded machines) ──
+  ex('smith-squat', 'Smith Machine Squat', 'machine', ['quads', 'glutes'], ['hamstrings', 'abs'], [
+    'Bar across upper back, feet a half-step in front of it',
+    'Unrack with a twist of the wrists, set the safety stops',
+    'Sit down to parallel, knees track over toes',
+    'Drive up through the whole foot, re-rack at the top',
+  ]),
+  ex('smith-bench-press', 'Smith Machine Bench Press', 'machine', ['chest'], ['triceps', 'frontDelts'], [
+    'Bench positioned so the bar lands on your lower chest',
+    'Shoulder blades pinched, feet planted',
+    'Lower straight down with elbows ~45°',
+    'Press straight up — the rails guide the path',
+  ]),
+  ex('chest-press-machine', 'Seated Chest Press Machine', 'machine', ['chest'], ['triceps', 'frontDelts'], [
+    'Seat height so the handles line up with mid-chest',
+    'Back flat on the pad, shoulder blades down',
+    'Press out until arms are straight, don\'t lock hard',
+    'Return slowly until you feel a chest stretch',
+  ]),
+  ex('shoulder-press-machine', 'Seated Shoulder Press Machine', 'machine', ['frontDelts'], ['triceps', 'sideDelts'], [
+    'Handles start just above shoulder height',
+    'Back and head against the pad',
+    'Press overhead without arching your lower back',
+    'Lower under control to the start',
+  ]),
+  ex('machine-row', 'Seated Machine Row', 'machine', ['upperBack', 'lats'], ['biceps', 'rearDelts'], [
+    'Chest against the pad, seat so handles are at chest height',
+    'Pull elbows back past your torso',
+    'Squeeze shoulder blades together at the end',
+    'Let the shoulders reach forward on the return',
+  ]),
+  ex('assisted-pull-up', 'Assisted Pull-up Machine', 'machine', ['lats'], ['biceps', 'upperBack', 'forearms'], [
+    'Kneel on the pad — more counterweight = more help',
+    'Start from straight arms, shoulders engaged',
+    'Pull until your chin clears the handles',
+    'Lower slowly; reduce the assist as you get stronger',
+  ], { bodyweight: true }),
+  ex('assisted-dip', 'Assisted Dip Machine', 'machine', ['triceps', 'chest'], ['frontDelts'], [
+    'Kneel on the pad, grip the dip handles',
+    'Lean slightly forward, elbows back not out',
+    'Lower until upper arms are about parallel',
+    'Press back up to straight arms',
+  ], { bodyweight: true }),
+  ex('seated-leg-curl', 'Seated Leg Curl', 'machine', ['hamstrings'], ['calves'], [
+    'Knees lined up with the machine pivot',
+    'Lap pad snug on your thighs',
+    'Curl heels down and back as far as you can',
+    'Return slowly, don\'t let the stack slam',
+  ]),
+  ex('hip-abduction', 'Hip Abductor Machine', 'machine', ['glutes'], [], [
+    'Sit tall, pads on the outside of the knees',
+    'Push knees out as wide as you can',
+    'Pause and squeeze the side of your hips',
+    'Bring legs back slowly — don\'t let the weights touch',
+  ]),
+  ex('hip-adduction', 'Hip Adductor Machine', 'machine', ['adductors'], [], [
+    'Sit tall, pads on the inside of the knees',
+    'Start wide at a comfortable stretch',
+    'Squeeze knees together and pause',
+    'Open back up slowly',
+  ]),
+  ex('ab-crunch-machine', 'Ab Crunch Machine', 'machine', ['abs'], ['obliques'], [
+    'Feet under the rollers, grip the handles by your shoulders',
+    'Curl your ribs toward your hips',
+    'Exhale hard and squeeze at the bottom',
+    'Return slowly — don\'t pull with your arms',
+  ]),
+  ex('back-extension', '45° Back Extension', 'machine', ['lowerBack', 'glutes'], ['hamstrings'], [
+    'Pad just below your hip bones, heels under the rollers',
+    'Arms crossed on your chest',
+    'Lower with a flat back to a hamstring stretch',
+    'Rise until body is a straight line — don\'t hyperextend',
+  ], { bodyweight: true }),
+  ex('machine-biceps-curl', 'Machine Biceps Curl', 'machine', ['biceps'], ['forearms'], [
+    'Seat so your elbows line up with the pivot',
+    'Backs of the upper arms flat on the pad',
+    'Curl up and squeeze at the top',
+    'Lower all the way to a full stretch',
+  ]),
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -320,6 +400,47 @@ const ANIMATIONS = {
     keyframes: REP({ trunk: 345, head: 355, uArm: 190, fArm: 160, thigh: 90, shin: 180, foot: 90 }, { trunk: 345, head: 355, uArm: 190, fArm: 160, thigh: 90, shin: 88, foot: 358 }, [0.1, 0.45, 0.55]) },
   'calf-raise': { duration: 2400, anchor: { joint: 'toe', x: 112, y: 170 }, props: [{ type: 'pad', from: [40, 176], to: [114, 176], w: 12 }],
     keyframes: REP({ ...STAND, foot: 75 }, { ...STAND, foot: 125 }, [0.1, 0.45, 0.55]) },
+
+  // ── Gym machines ──
+  // Smith clips keep the bar on a vertical rail (the thin pad drawn behind the figure).
+  'smith-squat': { duration: 3200, anchor: { joint: 'ankle', x: 80, y: 175 },
+    props: [{ type: 'pad', from: [66, 14], to: [66, 180], w: 2 }, { type: 'barbell', at: 'wrist' }],
+    keyframes: REP({ trunk: 3, head: 0, uArm: 200, fArm: 345, ...LEGS }, { trunk: 27, head: 10, uArm: 226, fArm: 22, thigh: 95, shin: 204, foot: 95 }, [0.12, 0.5, 0.58]) },
+  'smith-bench-press': { duration: 3000, anchor: { joint: 'hip', x: 125, y: 122 },
+    props: [{ type: 'pad', from: [88, 40], to: [88, 180], w: 2 }, { type: 'bench', x: 45, y: 133, w: 92 }, { type: 'barbell', at: 'wrist' }],
+    keyframes: REP({ trunk: 270, head: 270, uArm: 15, fArm: 15, thigh: 110, shin: 180, foot: 90 }, { trunk: 270, head: 270, uArm: 150, fArm: 0, thigh: 110, shin: 180, foot: 90 }, [0.1, 0.5, 0.56]) },
+  'chest-press-machine': { duration: 3000, anchor: { joint: 'hip', x: 90, y: 128 },
+    props: [{ type: 'pad', from: [72, 139], to: [110, 139], w: 9 }, { type: 'pad', from: [76, 139], to: [76, 70], w: 8 }, { type: 'pad', from: [92, 143], to: [92, 180], w: 4 }, { type: 'bar', at: 'wrist' }],
+    keyframes: REP({ trunk: 0, head: 0, uArm: 205, fArm: 75, thigh: 100, shin: 180, foot: 90 }, { trunk: 0, head: 0, uArm: 100, fArm: 92, thigh: 100, shin: 180, foot: 90 }) },
+  'shoulder-press-machine': { duration: 3000, anchor: { joint: 'hip', x: 90, y: 128 },
+    props: [{ type: 'pad', from: [72, 139], to: [110, 139], w: 9 }, { type: 'pad', from: [78, 139], to: [78, 66], w: 8 }, { type: 'pad', from: [92, 143], to: [92, 180], w: 4 }, { type: 'bar', at: 'wrist' }],
+    keyframes: REP({ trunk: 0, head: 0, uArm: 150, fArm: 0, thigh: 100, shin: 180, foot: 90 }, { trunk: 0, head: 0, uArm: 10, fArm: 0, thigh: 100, shin: 180, foot: 90 }) },
+  'machine-row': { duration: 3000, anchor: { joint: 'hip', x: 90, y: 128 },
+    props: [{ type: 'pad', from: [72, 139], to: [110, 139], w: 9 }, { type: 'pad', from: [112, 82], to: [112, 120], w: 8 }, { type: 'pad', from: [92, 143], to: [92, 180], w: 4 }, { type: 'bar', at: 'wrist' }],
+    keyframes: REP({ trunk: 10, head: 15, uArm: 90, fArm: 90, thigh: 100, shin: 180, foot: 90 }, { trunk: 5, head: 5, uArm: 225, fArm: 92, thigh: 100, shin: 180, foot: 90 }) },
+  'assisted-pull-up': { duration: 3000, noFloor: true, anchor: { joint: 'wrist', x: 100, y: 12 },
+    props: [{ type: 'pullupBar', x: 100, y: 12 }, { type: 'plate', at: 'knee', angle: 180, dx: -16 }],
+    keyframes: REP({ trunk: 0, head: 0, uArm: 0, fArm: 0, thigh: 178, shin: 268, foot: 210 }, { trunk: 350, head: 0, uArm: 200, fArm: 10, thigh: 175, shin: 265, foot: 210 }) },
+  'assisted-dip': { duration: 3000, noFloor: true, anchor: { joint: 'wrist', x: 110, y: 60 },
+    props: [{ type: 'pad', from: [100, 63], to: [128, 63], w: 5 }, { type: 'plate', at: 'knee', angle: 180, dx: -16 }],
+    keyframes: REP({ trunk: 0, head: 0, uArm: 180, fArm: 180, thigh: 182, shin: 268, foot: 210 }, { trunk: 15, head: 15, uArm: 226, fArm: 114, thigh: 190, shin: 270, foot: 210 }) },
+  'seated-leg-curl': { duration: 2800, anchor: { joint: 'hip', x: 80, y: 125 },
+    props: [{ type: 'pad', from: [64, 136], to: [118, 136], w: 9 }, { type: 'pad', from: [67, 136], to: [54, 84], w: 8 }, { type: 'pad', from: [82, 141], to: [82, 180], w: 4 }, { type: 'pad', from: [98, 114], to: [124, 114], w: 7 }, { type: 'roller', at: 'ankle', dy: 6 }],
+    keyframes: REP({ trunk: 345, head: 355, uArm: 190, fArm: 160, thigh: 90, shin: 95, foot: 15 }, { trunk: 345, head: 355, uArm: 190, fArm: 160, thigh: 90, shin: 195, foot: 100 }, [0.1, 0.45, 0.55]) },
+  // Front view: knees push apart (abductor) or squeeze together (adductor) while the feet stay close.
+  'hip-abduction': { view: 'front', duration: 2800, anchor: { x: 100, y: 175 },
+    keyframes: REP({ trunk: 0, head: 0, uArm: 172, fArm: 168, thigh: 177, shin: 183 }, { trunk: 0, head: 0, uArm: 172, fArm: 168, thigh: 157, shin: 203 }, [0.1, 0.45, 0.55]) },
+  'hip-adduction': { view: 'front', duration: 2800, anchor: { x: 100, y: 175 },
+    keyframes: REP({ trunk: 0, head: 0, uArm: 172, fArm: 168, thigh: 155, shin: 205 }, { trunk: 0, head: 0, uArm: 172, fArm: 168, thigh: 177, shin: 183 }, [0.1, 0.45, 0.55]) },
+  'ab-crunch-machine': { duration: 2800, anchor: { joint: 'hip', x: 85, y: 128 },
+    props: [{ type: 'pad', from: [67, 139], to: [105, 139], w: 9 }, { type: 'pad', from: [87, 143], to: [87, 180], w: 4 }, { type: 'roller', at: 'ankle', dx: 6, dy: -4 }, { type: 'bar', at: 'wrist' }],
+    keyframes: REP({ trunk: 355, head: 0, uArm: 160, fArm: 15, thigh: 95, shin: 180, foot: 90 }, { trunk: 40, head: 60, uArm: 205, fArm: 60, thigh: 95, shin: 180, foot: 90 }, [0.1, 0.45, 0.55]) },
+  'back-extension': { duration: 3200, anchor: { joint: 'ankle', x: 50, y: 165 },
+    props: [{ type: 'pad', from: [114, 113], to: [96, 131], w: 10 }, { type: 'pad', from: [100, 136], to: [100, 180], w: 4 }, { type: 'roller', at: 'ankle', dx: -5, dy: -5 }, { type: 'plate', at: 'toe', angle: 135 }],
+    keyframes: REP({ trunk: 45, head: 50, uArm: 195, fArm: 30, thigh: 225, shin: 225, foot: 135 }, { trunk: 140, head: 150, uArm: 290, fArm: 125, thigh: 225, shin: 225, foot: 135 }, [0.1, 0.5, 0.58]) },
+  'machine-biceps-curl': { duration: 2600, anchor: { joint: 'hip', x: 80, y: 128 },
+    props: [{ type: 'pad', from: [62, 139], to: [98, 139], w: 9 }, { type: 'pad', from: [80, 143], to: [80, 180], w: 4 }, { type: 'pad', from: [96, 88], to: [113, 106], w: 8 }, { type: 'pad', from: [108, 108], to: [108, 180], w: 4 }, { type: 'bar', at: 'wrist' }],
+    keyframes: REP({ trunk: 15, head: 20, uArm: 135, fArm: 125, thigh: 95, shin: 180, foot: 90 }, { trunk: 15, head: 20, uArm: 135, fArm: 15, thigh: 95, shin: 180, foot: 90 }, [0.08, 0.45, 0.55]) },
 };
 for (const e of EXERCISES) e.anim = ANIMATIONS[e.id] || null;
 

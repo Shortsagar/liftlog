@@ -80,3 +80,14 @@ export function backupFilename(now = Date.now()) {
   const p = n => String(n).padStart(2, '0');
   return `liftlog-backup-${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}.json`;
 }
+
+// Reject oversized files before allocating their text or parsing JSON.
+export const MAX_BACKUP_BYTES = 20 * 1024 * 1024;
+export async function readBackupFile(file) {
+  if (!Number.isFinite(file.size) || file.size < 0 || file.size > MAX_BACKUP_BYTES) throw new Error('Backup must be 20 MB or smaller');
+  let obj;
+  try { obj = JSON.parse(await file.text()); } catch { throw new Error('That file is not valid JSON'); }
+  const problem = validateBackup(obj);
+  if (problem) throw new Error(`Not a LiftLog backup (${problem})`);
+  return obj;
+}

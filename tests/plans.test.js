@@ -67,8 +67,8 @@ test('progress: "Week 2 of 2, 4/6 done"', () => {
 
 test('posKey is stable', () => { assert.equal(posKey({ week: 1, day: 2 }), '1:2'); });
 
-test('built-in plans: 5 plans, every exercise exists, every day has exercises', () => {
-  assert.equal(PLANS.length, 5);
+test('built-in plans: 7 plans, every exercise exists, every day has exercises', () => {
+  assert.equal(PLANS.length, 7);
   for (const p of PLANS) {
     assert.ok(p.weeks.length >= 4, p.id);
     for (const w of p.weeks) for (const d of w.days) {
@@ -110,4 +110,11 @@ test('validatePlanForm reports missing name, days, and empty days', () => {
   assert.deepEqual(validatePlanForm({ name: 'x', weeks: 4, days: [{ name: 'A', exercises: [] }] }), ['"A" has no exercises']);
   assert.deepEqual(validatePlanForm({ name: 'x', weeks: 0, days: [{ name: 'A', exercises: [{ exId: 'squat', sets: 3, reps: 5 }] }] }), ['Weeks must be between 1 and 52']);
   assert.deepEqual(validatePlanForm({ name: 'x', weeks: 6, days: [{ name: 'A', exercises: [{ exId: 'squat', sets: 3, reps: 5 }] }] }), []);
+});
+
+test('gym plans use only gym-floor equipment (no free barbells)', () => {
+  const gym = PLANS.filter(p => p.gym);
+  assert.deepEqual(gym.map(p => p.id), ['gym-machine-circuit', 'gym-upper-lower']);
+  for (const p of gym) for (const d of p.weeks[0].days) for (const e of d.exercises)
+    assert.notEqual(byId(e.exId).equipment, 'barbell', `${p.id}: ${e.exId}`);
 });
