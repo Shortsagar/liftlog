@@ -299,6 +299,32 @@ a.chip { text-decoration: none; }
 .figure .prop-solid { fill: var(--muted); }
 :root[data-theme="light"] .figure .prop-pad { stroke: #cfd3da; }
 
+.figure .machine-frame { stroke: #74869b; fill: none; }
+.figure .machine-rail { stroke: #adbdcd; fill: none; }
+.figure .machine-panel { fill: #23303e; stroke: #74869b; stroke-width: 1.5; }
+.figure .machine-weight { fill: #455568; stroke: #1b2632; stroke-width: .7; }
+.figure .machine-pad { stroke: #536282; fill: none; }
+.figure .machine-pad-fill { fill: #536282; stroke: #8393b2; stroke-width: 1; }
+.figure .machine-lever { stroke: #91a6bb; fill: none; }
+.figure .machine-pivot, .figure .machine-carriage { fill: #263748; stroke: #b2c6d8; stroke-width: 1.5; }
+.figure .machine-grip, .figure .machine-rope { stroke: #c4cbd3; fill: none; }
+.figure .machine-grip-fill { fill: #c4cbd3; }
+.figure .machine-foot { fill: #4b596b; }
+.figure .machine-adjust { stroke: #d6bb71; fill: #d6bb71; }
+.figure .machine-plate { fill: #344557; stroke: #a8b9c9; stroke-width: 2; }
+:root[data-theme="light"] .figure .machine-frame { stroke: #8c9bab; }
+:root[data-theme="light"] .figure .machine-rail { stroke: #657e95; }
+:root[data-theme="light"] .figure .machine-panel { fill: #e5ebf1; stroke: #8295a7; }
+:root[data-theme="light"] .figure .machine-weight { fill: #b5c0cd; stroke: #e5ebf1; }
+:root[data-theme="light"] .figure .machine-pad { stroke: #9baac5; }
+:root[data-theme="light"] .figure .machine-pad-fill { fill: #b8c6dc; }
+:root[data-theme="light"] .figure .machine-lever { stroke: #738ba2; }
+:root[data-theme="light"] .figure .machine-pivot, :root[data-theme="light"] .figure .machine-carriage { fill: #dce5ed; stroke: #657e95; }
+:root[data-theme="light"] .figure .machine-grip, :root[data-theme="light"] .figure .machine-rope { stroke: #53667b; }
+:root[data-theme="light"] .figure .machine-grip-fill { fill: #53667b; }
+:root[data-theme="light"] .figure .machine-plate { fill: #c2cdda; stroke: #657e95; }
+.machine-guide { margin: 0; padding: 10px 12px; background: var(--surface-2); border-radius: 8px; }
+
 .demo { display: grid; grid-template-columns: 112px 1fr; gap: 12px; align-items: start; }
 .demo-figwrap { position: relative; }
 .demo-fig { display: block; width: 112px; height: 112px; padding: 4px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); }

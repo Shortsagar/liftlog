@@ -41,14 +41,22 @@ try {
   await send('Page.enable');
   await send('Emulation.setDeviceMetricsOverride',{width:1100,height:1400,deviceScaleFactor:1,mobile:false});
   const {EXERCISES} = await import('../data/exercises.js');
-  for(let page=0;page<Math.ceil(EXERCISES.length/7);page++) {
-    const ids=EXERCISES.slice(page*7,page*7+7).map(e=>e.id).join(',');
+  const machinesOnly = process.argv.includes('--machines');
+  const review = machinesOnly ? EXERCISES.filter(e=>e.anim.machine) : EXERCISES;
+  const prefix = machinesOnly ? 'machine-review-' : 'animation-review-';
+  for(let page=0;page<Math.ceil(review.length/7);page++) {
+    const ids=review.slice(page*7,page*7+7).map(e=>e.id).join(',');
     await send('Page.navigate',{url:origin+'/tools/anim-preview.html?ex='+ids});
     for(let i=0;i<100;i++){if(await evaluate("document.querySelectorAll('.row').length")===ids.split(',').length)break;await new Promise(r=>setTimeout(r,50));}
     await evaluate("document.querySelectorAll('.row .figure').forEach(el=>el.style.height='170px')");
     await evaluate("window.scrollTo(0,0); new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))");
     const shot=await send('Page.captureScreenshot',{format:'png'});
-    await writeFile(join(tmpdir(),'animation-review-'+page+'.png'),Buffer.from(shot.data,'base64'));
+    await writeFile(join(tmpdir(),prefix+page+'.png'),Buffer.from(shot.data,'base64'));
+    if (machinesOnly) {
+      await evaluate("document.documentElement.dataset.theme='light'; new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))");
+      const lightPage=await send('Page.captureScreenshot',{format:'png'});
+      await writeFile(join(tmpdir(),prefix+page+'-light.png'),Buffer.from(lightPage.data,'base64'));
+    }
     console.log('Captured page',page,ids);
   }
   await evaluate("document.documentElement.dataset.theme='light'; window.scrollTo(0,0)");
@@ -68,6 +76,21 @@ try {
       fig.destroy();fig.el.remove();
     }
   })()`);
+  if (machinesOnly) {
+    await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
+    await evaluate(`(async()=>{
+      document.documentElement.dataset.theme='dark';
+      const root=document.createElement('div');root.id='overlay-root';document.body.append(root);
+      const {openDemo}=await import('/js/demo.js');const {byId}=await import('/data/exercises.js');
+      openDemo(byId('leg-press'));
+      document.querySelector('.modal .figure').__fig.pause();
+      if(!document.querySelector('.machine-guide')?.textContent.includes('footplate'))throw Error('Missing machine recognition guide');
+      const box=document.querySelector('.modal').getBoundingClientRect();
+      if(box.width>390)throw Error('Machine modal overflows mobile viewport');
+    })()`);
+    const mobile=await send('Page.captureScreenshot',{format:'png'});
+    await writeFile(join(tmpdir(),'machine-review-phone.png'),Buffer.from(mobile.data,'base64'));
+  }
   console.log('PASS all 44 figures render, advance, pause and resume without initial jumps');
 
 } finally {

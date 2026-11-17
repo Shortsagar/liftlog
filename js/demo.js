@@ -1,3 +1,4 @@
+import { machineInfo } from './machines.js';
 import { onDispose } from './lifecycle.js';
 // Form demo block: animated figure + target muscles + cues. Tap the figure to enlarge.
 import { h, icon, modal } from './ui.js';
@@ -30,6 +31,7 @@ export function openDemo(ex) {
   const fig = createFigure(ex, { className: 'figure-lg' });
   const close = modal(h('div', { class: 'stack' },
     fig ? h('div', { class: 'demo-stage' }, fig.el, playBtn(fig)) : null,
+    machineInfo(ex.anim) ? h('p', { class: 'small machine-guide' }, h('b', {}, 'Look for: '), machineInfo(ex.anim).hint, h('span', { class: 'muted', style: { display: 'block', marginTop: '4px' } }, 'Typical machine shown; designs vary by gym.')) : null,
     musclesLine(ex),
     h('ol', { class: 'cues lg' }, ...ex.cues.map(c => h('li', {}, c))),
     h('a', { class: 'btn block', href: `#/exercise/${ex.id}`, onClick: () => close() }, 'History & progress')),

@@ -1,3 +1,5 @@
+import { machineOps, machinePoints } from './machines.js';
+
 // Figure rig math (pure, no DOM).
 //
 // A pose is a set of SEGMENT ANGLES in degrees, measured in screen space:
@@ -165,8 +167,10 @@ export function fitBox(anim, samples = 40) {
     if (anim.view === 'front') {
       const f = forwardKinematicsFront(pose, anim.anchor, DIMS, anim.seated);
       pts.push(f.head, ...Object.values(f.right), ...Object.values(f.left));
+      pts.push(...machinePoints([...machineOps(anim, f), ...machineOps(anim, f, 'front')]));
     } else {
-      pts.push(...Object.values(forwardKinematics(pose, anim.anchor)));
+      const j = forwardKinematics(pose, anim.anchor);
+      pts.push(...Object.values(j), ...machinePoints([...machineOps(anim, j), ...machineOps(anim, j, 'front')]));
     }
   }
   for (const p of anim.props || []) {
@@ -181,5 +185,6 @@ export function fitBox(anim, samples = 40) {
   const y1 = anim.noFloor ? Math.max(...pts.map(p => p.y)) + pad : Math.max(186, ...pts.map(p => p.y + 10)); // floor (y=180) sits near the bottom
   const size = Math.ceil(Math.max(x1 - x0, y1 - y0));
   const cx = (x0 + x1) / 2;
-  return { x: Math.round(cx - size / 2), y: Math.round(y1 - size), w: size, h: size };
+  const top = anim.machine ? (y0 + y1 - size) / 2 : y1 - size;
+  return { x: Math.round(cx - size / 2), y: Math.round(top), w: size, h: size };
 }

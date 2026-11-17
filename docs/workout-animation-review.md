@@ -52,3 +52,12 @@ Every figure now includes neutral muscle contours alongside the primary/secondar
 - `tools/anim-preview.html?ex=exercise-id`: existing four-phase visual inspection page.
 
 The service-worker version was rebuilt so installed clients can receive the updated assets. No deployment was performed.
+
+
+## Machine recognition pass
+
+All 21 machine/cable exercises now include an original equipment silhouette, with frames, stacks, rail carriages, levers and contact pads where applicable. Machine shapes are drawn locally with SVG primitives and included in offline assets; no manufacturer images are shipped. Camera bounds include the equipment at every sampled pose. Enlarged demos add identifying features and explain that actual designs vary by gym.
+
+Reference catalog: [Life Fitness Insignia Series](https://www.lifefitness.com/en-us/catalog/strength-training/selectorized/insignia-series), with equipment examples for the [seated leg curl](https://www.lifefitness.com/en-us/catalog/strength-training/selectorized/insignia-series-seated-leg-curl) and [assisted dip/chin station](https://www.lifefitness.com/en-us/catalog/strength-training/selectorized/insignia-series-assist-dip-chin). These are generic identification schematics, not exact replicas of a particular brand or facility's equipment.
+
+`node tools/animation-review.mjs --machines` captures all machine clips in both themes and a 390px phone demo, and checks playback. `tests/machines.test.js` checks complete equipment coverage, camera containment, ankle-roller attachment and inner/outer knee-pad placement.

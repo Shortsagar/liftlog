@@ -457,6 +457,7 @@ for (const id of ['db-shoulder-press', 'shoulder-press-machine']) {
 }
 ANIMATIONS['lat-pulldown'].pins = [handTrack([105, 18], [109, 69], 'front')];
 ANIMATIONS['face-pull'].pins = [handTrack([138, 37], [85, 28], 'back')];
+ANIMATIONS['calf-raise'].pins = [{limb: 'arm', relativeTo: 'shoulder', target: [19, 13], bend: 'back'}];
 ANIMATIONS['goblet-squat'].pins = [{limb: 'arm', relativeTo: 'shoulder', target: [16, -6], bend: 'front'}];
 // The bar rests across the back; the hands stay next to it.
 for (const id of ['squat', 'smith-squat']) {
@@ -483,7 +484,10 @@ Object.assign(ANIMATIONS['hip-thrust'], {
     {trunk: 270, head: 305, uArm: 95, fArm: 100, thigh: 90, shin: 180, foot: 95}),
 });
 
-for (const e of EXERCISES) e.anim = ANIMATIONS[e.id] || null;
+for (const e of EXERCISES) {
+  e.anim = ANIMATIONS[e.id] || null;
+  if (e.anim && ['machine', 'cable'].includes(e.equipment)) e.anim.machine = e.id;
+}
 
 const INDEX = new Map(EXERCISES.map(e => [e.id, e]));
 export const byId = id => INDEX.get(id);

@@ -17,6 +17,7 @@
   "js/demo.js",
   "js/figure.js",
   "js/lifecycle.js",
+  "js/machines.js",
   "js/model.js",
   "js/picker.js",
   "js/plan-store.js",

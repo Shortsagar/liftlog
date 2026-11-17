@@ -118,3 +118,14 @@ test('gym plans use only gym-floor equipment (no free barbells)', () => {
   for (const p of gym) for (const d of p.weeks[0].days) for (const e of d.exercises)
     assert.notEqual(byId(e.exId).equipment, 'barbell', `${p.id}: ${e.exId}`);
 });
+
+
+test('every gym workout mixes free-weight or bodyweight work with machines or cables', () => {
+  for (const p of PLANS.filter(p => p.gym)) for (const w of p.weeks) for (const d of w.days) {
+    const equipment = d.exercises.map(e => byId(e.exId).equipment);
+    assert.ok(equipment.filter(e => ['dumbbell', 'bodyweight'].includes(e)).length >= 2,
+      `${p.id} ${d.name}: needs meaningful non-machine work`);
+    assert.ok(equipment.some(e => ['machine', 'cable'].includes(e)),
+      `${p.id} ${d.name}: retain gym equipment`);
+  }
+});

@@ -2,7 +2,7 @@
 
 A BodySpace-style workout tracker that runs entirely on your phone. It has no backend, no account, no API keys, and no automatic uploads of workout data (online visits can check for app updates). It installs to your home screen and works in airplane mode.
 
-- **Plans:** 5 free starter plans (Full Body Beginner, Push/Pull/Legs, Upper/Lower 4-day, 5×5 Strength, Dumbbell-only Home), 2 gym plans built for Planet Fitness–style equipment (Gym Machine Full Body, Gym Upper / Lower: Smith machine, selectorized machines, assisted pull-up/dip, abductor/adductor, cables and dumbbells), your own custom plans, and one-off workouts. "Today's workout" tracks which week and day you're on.
+- **Plans:** 5 free starter plans (Full Body Beginner, Push/Pull/Legs, Upper/Lower 4-day, 5×5 Strength, Dumbbell-only Home), 2 gym plans built for Planet Fitness–style equipment (Gym Full Body, Gym Upper / Lower: a mix of dumbbell and bodyweight exercises, Smith squats, machines and cables), your own custom plans, and one-off workouts. "Today's workout" tracks which week and day you're on.
 - **Fast logging:** weight and reps steppers, a numeric keypad, sets pre-filled from last time ("Last: 135 × 8"), add/remove/swap, notes, an auto rest timer, and a workout clock. Edits are saved within a fraction of a second (rapid typing is grouped into one write, and anything pending is written immediately when you leave the screen or switch apps). The log shows Saving, Saved, or a failure with retry and backup controls.
 - **Form guides:** a looping SVG figure for each of 44 exercises, with primary and secondary muscles highlighted and form cues. Tap to enlarge, with pause/play.
 - **Progress:** history, a per-exercise chart of top set and estimated 1RM (Epley), automatic PR detection with a little celebration, a weekly summary (workouts, volume, streak), plan progress, and a bodyweight trend.
@@ -60,13 +60,15 @@ Both options give you an `https://` address. Offline mode and installing to the 
 
 ### Option B: GitHub Pages
 
-1. Create a free account at github.com, then click **New repository**. Name it something like `liftlog`, make it **Public** (free Pages needs public), and click **Create repository**.
-2. Put the files in the repository.
-   - **Without git:** on the new repo page, click **uploading an existing file**. Open the `dist` folder from step A1 and drag its *contents* (not the folder itself) into the browser, then click **Commit changes**.
-   - Publish only the generated `dist` contents in a separate deployment repository. Do not upload this workspace or its Git history. Git commits contain author/committer names and email addresses; use a privacy-preserving hosting identity and Git email before publishing. Public account names and domains may also identify you.
-3. In the repo, go to **Settings → Pages**. Under **Build and deployment**, set **Source: Deploy from a branch**, **Branch: `main`**, **Folder: `/ (root)`**, then click **Save**.
-4. Wait about a minute and refresh. The page shows your address: `https://YOUR-USERNAME.github.io/liftlog/`.
-5. To update later: upload the changed files (or `git push`). See "Changing the app" first.
+This app publishes only the generated `dist/` files from the dedicated `gh-pages` branch. In **Settings → Pages**, choose **Deploy from a branch**, branch **gh-pages**, folder **/ (root)**. Never select the source `main` branch as the Pages publishing source.
+
+1. Run `npm run privacy:setup` after cloning. Keep the approved author/committer identity and tracked hooks enabled.
+2. Review changes and run the app tests and `npm run test:identity`.
+3. Run `npm run dist` and review the generated public files against `tools/public-assets.json`.
+4. Publish only those files to `gh-pages`, preserving the same identity checks for deployment commits and pushes. Push source changes separately to `main`.
+5. Wait for GitHub Pages to finish its build. Installed phones check for the new version when opened online; tap **Update ready — tap to reload**.
+
+A push to `main` alone does not update the hosted app. Source files, tests, private notes, backups and Git metadata outside the public inventory are not part of the hosted artifact. Repository visibility is separate from Pages publishing; never commit private files to a public source repository.
 
 For stronger isolation, host LiftLog on its own HTTPS origin, separate from other apps. Paths and separate database names do not isolate data from other JavaScript on the same origin. The generated `_headers` enables security headers on Netlify; other hosts need equivalent configuration. GitHub Pages does not apply that file. The HTML includes a fallback content security policy, but embedding protection requires response headers.
 

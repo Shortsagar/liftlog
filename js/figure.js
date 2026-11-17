@@ -1,3 +1,4 @@
+import { machineOps, machineInfo } from './machines.js';
 // Renders a rig animation as inline SVG. One shared requestAnimationFrame loop drives every
 // visible figure; off-screen figures pause automatically. Elements are created once and only
 // their attributes change per frame.
@@ -123,6 +124,7 @@ function propOps(anim, joints, layer) {
       }
     }
   }
+  if (anim.machine) for (const op of ops) if (op.cls === 'prop-pad') op.cls = 'machine-pad';
   return ops;
 }
 
@@ -130,7 +132,7 @@ function sideOps(anim, pose, roles) {
   const j = forwardKinematics(pose, anim.anchor);
   const ops = [];
   if (!anim.noFloor) ops.push(line({ x: -400, y: 180 }, { x: 600, y: 180 }, 1.5, 'floor'));
-  ops.push(...propOps(anim, j, 'back'));
+  ops.push(...machineOps(anim, j), ...propOps(anim, j, 'back'));
   // far limbs (behind the body)
   const far = segInfo(j, pose, true);
   ops.push(line(j.knee2, j.ankle2, W.shin, 'fig-far'), line(j.ankle2, j.toe2, W.foot, 'fig-far'), line(j.hip, j.knee2, W.thigh, 'fig-far'));
@@ -150,14 +152,15 @@ function sideOps(anim, pose, roles) {
   ops.push(circle(j.wrist, 3.2, 'fig-head'));
   const face = vec((pose.head ?? pose.trunk) + 90, 8);
   ops.push(circle({x: j.head.x + face.x, y: j.head.y + face.y}, 1.3, 'fig-feature'));
-  ops.push(...propOps(anim, j, 'front'));
+  ops.push(...machineOps(anim, j, 'front'), ...propOps(anim, j, 'front'));
   return ops;
 }
 
 function frontOps(anim, pose, roles) {
   const f = forwardKinematicsFront(pose, anim.anchor, DIMS, anim.seated);
   const ops = [line({ x: -400, y: 180 }, { x: 600, y: 180 }, 1.5, 'floor')];
-  if (anim.seated) {
+  ops.push(...machineOps(anim, f));
+  if (anim.seated && !anim.machine) {
     ops.push(line({x: f.pelvis.x - 24, y: f.neck.y + 5}, {x: f.pelvis.x - 24, y: f.pelvis.y + 9}, 7, 'prop-pad'));
     ops.push(line({x: f.pelvis.x - 29, y: f.pelvis.y + 9}, {x: f.pelvis.x + 29, y: f.pelvis.y + 9}, 8, 'prop-pad'));
   }
@@ -189,8 +192,9 @@ function frontOps(anim, pose, roles) {
   for (const s of [f.left, f.right]) {
     ops.push(circle(s.elbow, 2.3, 'fig-joint'), circle(s.knee, 2.3, 'fig-joint'), circle(s.wrist, 3.2, 'fig-head'));
     ops.push(line(s.ankle, {x: s.ankle.x + (s === f.left ? -8 : 8), y: s.ankle.y + 2}, 6, 'fig'));
-    if (anim.seated) ops.push(line({x:s.knee.x + (s === f.left ? -7 : 7), y:s.knee.y - 6}, {x:s.knee.x + (s === f.left ? -7 : 7), y:s.knee.y + 6}, 5, 'prop-pad'));
+    if (anim.seated && !anim.machine) ops.push(line({x:s.knee.x + (s === f.left ? -7 : 7), y:s.knee.y - 6}, {x:s.knee.x + (s === f.left ? -7 : 7), y:s.knee.y + 6}, 5, 'prop-pad'));
   }
+  ops.push(...machineOps(anim, f, 'front'));
   for (const p of anim.props || []) if (p.type === 'dumbbell') for (const s of [f.left, f.right]) ops.push(circle(s.wrist, 6, 'prop-plate'), circle(s.wrist, 2, 'prop-solid'));
   return ops;
 }
@@ -220,7 +224,7 @@ export function createFigure(ex, { autoplay = !reducedMotion(), className = '', 
   svg.setAttribute('viewBox', `${box.x} ${box.y} ${box.w} ${box.h}`);
   svg.setAttribute('class', `figure ${className}`);
   svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label', `${ex.name} form demonstration`);
+  svg.setAttribute('aria-label', `${ex.name} form demonstration${machineInfo(ex.anim) ? '. Equipment: ' + machineInfo(ex.anim).name + '. ' + machineInfo(ex.anim).hint : ''}`);
   const g = document.createElementNS(NS, 'g');
   g.setAttribute('stroke-linecap', 'round');
   svg.append(g);
