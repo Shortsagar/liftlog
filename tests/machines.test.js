@@ -1,8 +1,8 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {EXERCISES, byId} from '../data/exercises.js';
-import {MACHINES, machineOps, machinePoints} from '../js/machines.js';
-import {DIMS, normalizeKeyframes, solvePose, forwardKinematics, forwardKinematicsFront, fitBox} from '../js/rig.js';
+import {EXERCISES, byId} from '../database/exercises.js';
+import {MACHINES, machineOps, machinePoints} from '../src/machines.js';
+import {DIMS, normalizeKeyframes, solvePose, forwardKinematics, forwardKinematicsFront, fitBox} from '../src/rig.js';
 const joints = (anim, t) => {
   const pose = solvePose(anim, normalizeKeyframes(anim.keyframes), t);
   return anim.view === 'front' ? forwardKinematicsFront(pose, anim.anchor, DIMS, anim.seated) : forwardKinematics(pose, anim.anchor);

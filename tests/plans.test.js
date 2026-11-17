@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { startPlan, currentDay, complete, skip, progress, posKey } from '../js/plans.js';
-import { PLANS, repeatWeeks } from '../data/plans.js';
-import { byId } from '../data/exercises.js';
+import { startPlan, currentDay, complete, skip, progress, posKey } from '../src/plans.js';
+import { PLANS, repeatWeeks } from '../database/plans.js';
+import { byId } from '../database/exercises.js';
 
 const day = name => ({ name, exercises: [{ exId: 'squat', sets: 3, reps: 5 }] });
 // 2 weeks × 3 days
@@ -93,7 +93,7 @@ test('dumbbell-only plan uses only dumbbell/bodyweight exercises', () => {
     assert.ok(['dumbbell', 'bodyweight'].includes(byId(e.exId).equipment), e.exId);
 });
 
-import { buildCustomPlan, validatePlanForm } from '../js/plans.js';
+import { buildCustomPlan, validatePlanForm } from '../src/plans.js';
 test('buildCustomPlan repeats the template days across N weeks', () => {
   const p = buildCustomPlan({ id: 'c1', name: ' My Plan ', weeks: 4, days: [
     { name: 'Day A', exercises: [{ exId: 'squat', sets: 3, reps: '5' }] },

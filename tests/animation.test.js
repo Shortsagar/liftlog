@@ -1,8 +1,8 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {EXERCISES, byId} from '../data/exercises.js';
-import {normalizeKeyframes, solvePose, posedJoints, forwardKinematicsFront, fitBox, DIMS} from '../js/rig.js';
-import {opsFor} from '../js/figure.js';
+import {EXERCISES, byId} from '../database/exercises.js';
+import {normalizeKeyframes, solvePose, posedJoints, forwardKinematicsFront, fitBox, DIMS} from '../src/rig.js';
+import {opsFor} from '../src/figure.js';
 const distance = (a,b) => Math.hypot(a.x-b.x,a.y-b.y);
 const joints = (a,t) => posedJoints(a,normalizeKeyframes(a.keyframes),t);
 

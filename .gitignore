@@ -10,3 +10,7 @@ dist/
 *.pem
 *.key
 liftlog-backup-*.json
+
+# Private Obsidian vault: never committed or published
+Obsidian-Vault/
+.obsidian/

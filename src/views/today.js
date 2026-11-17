@@ -3,7 +3,7 @@ import { h, icon, fmtDate } from '../ui.js';
 import { app } from '../state.js';
 import { allSessions, getDraft, startWorkout } from '../repo.js';
 import { sessionVolume, toDisplay } from '../model.js';
-import { byId } from '../../data/exercises.js';
+import { byId } from '../../database/exercises.js';
 import { activeContext, startPlanDay, skipDay } from '../plan-store.js';
 import { progress } from '../plans.js';
 import { go } from '../state.js';

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { EXERCISES, MUSCLES, byId } from '../data/exercises.js';
+import { EXERCISES, MUSCLES, byId } from '../database/exercises.js';
 
 const REQUIRED = ['bench-press', 'incline-db-press', 'overhead-press', 'squat', 'deadlift',
   'romanian-deadlift', 'barbell-row', 'lat-pulldown', 'pull-up', 'db-curl', 'triceps-pushdown',
@@ -30,7 +30,7 @@ test('plank is timed, pull-up is bodyweight', () => {
   assert.equal(byId('pull-up').bodyweight, true);
 });
 
-import { normalizeKeyframes, posedJoints, fitBox, solvePose, forwardKinematicsFront, DIMS } from '../js/rig.js';
+import { normalizeKeyframes, posedJoints, fitBox, solvePose, forwardKinematicsFront, DIMS } from '../src/rig.js';
 test('every exercise animation stays inside its fitted, square frame', () => {
   for (const e of EXERCISES) {
     assert.ok(e.anim && e.anim.keyframes.length >= 1, `${e.id} has no animation`);

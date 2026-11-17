@@ -4,8 +4,8 @@ import { mkdtempSync, mkdirSync, writeFileSync, symlinkSync, rmSync, readFileSyn
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { publicAssets } from '../tools/public-assets.mjs';
-import { MAX_BACKUP_BYTES, readBackupFile } from '../js/backup.js';
-import { h } from '../js/ui.js';
+import { MAX_BACKUP_BYTES, readBackupFile } from '../src/backup.js';
+import { h } from '../src/ui.js';
 
 test('oversized backups are rejected before reading attacker-controlled contents', async () => {
   let read = false;

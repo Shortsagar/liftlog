@@ -3,7 +3,7 @@ import { app, go } from './state.js';
 import * as rest from './timer.js';
 import { newSession } from './workout.js';
 import { complete } from './plans.js';
-import { builtInPlan } from '../data/plans.js';
+import { builtInPlan } from '../database/plans.js';
 import { confirmDialog } from './ui.js';
 
 

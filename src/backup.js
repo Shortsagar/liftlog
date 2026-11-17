@@ -1,5 +1,5 @@
-import { byId } from '../data/exercises.js';
-import { builtInPlan } from '../data/plans.js';
+import { byId } from '../database/exercises.js';
+import { builtInPlan } from '../database/plans.js';
 import { finite, integer, record, text, timestamp, repTarget, validPlan } from './validation.js';
 // Backup: export every store to one JSON object; import validates fully BEFORE replacing anything.
 export const BACKUP_VERSION = 1;

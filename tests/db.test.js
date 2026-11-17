@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { openStore, memoryBackend } from '../js/db.js';
+import { openStore, memoryBackend } from '../src/db.js';
 
 test('put/get/all/del roundtrip', async () => {
   const db = await openStore(memoryBackend());

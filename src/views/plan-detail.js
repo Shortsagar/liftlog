@@ -1,7 +1,7 @@
 // Plan detail: weeks → days → exercises; start/stop; start any day.
 import { h, icon, pageHead, confirmDialog, toast } from '../ui.js';
 import { go } from '../state.js';
-import { byId } from '../../data/exercises.js';
+import { byId } from '../../database/exercises.js';
 import { getPlan, getActive, activate, setActive, startPlanDay, deletePlan } from '../plan-store.js';
 import { progress, posKey } from '../plans.js';
 

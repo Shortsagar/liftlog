@@ -1,7 +1,7 @@
 // Custom plan builder. Route: #/plan-edit/new | #/plan-edit/<id> | #/plan-edit/copy:<builtInId>
 import { h, icon, pageHead, toast } from '../ui.js';
 import { go } from '../state.js';
-import { byId } from '../../data/exercises.js';
+import { byId } from '../../database/exercises.js';
 import { getPlan, savePlan, activate } from '../plan-store.js';
 import { buildCustomPlan, validatePlanForm, editableWeeks } from '../plans.js';
 import { pickExercise } from '../picker.js';

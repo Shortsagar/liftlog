@@ -2,7 +2,7 @@ import { machineInfo } from './machines.js';
 import { onDispose } from './lifecycle.js';
 // Form demo block: animated figure + target muscles + cues. Tap the figure to enlarge.
 import { h, icon, modal } from './ui.js';
-import { muscleLabel } from '../data/exercises.js';
+import { muscleLabel } from '../database/exercises.js';
 import { createFigure } from './figure.js';
 import { app } from './state.js';
 

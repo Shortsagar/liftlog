@@ -1,9 +1,9 @@
-import { idbBackend, openStore, localBackend } from '../js/db.js';
-import { exportAll, importAll, validateBackup } from '../js/backup.js';
-import { h, modal } from '../js/ui.js';
-import { mountDemo } from '../js/demo.js';
-import { byId } from '../data/exercises.js';
-import { disposeTree } from '../js/lifecycle.js';
+import { idbBackend, openStore, localBackend } from '../src/db.js';
+import { exportAll, importAll, validateBackup } from '../src/backup.js';
+import { h, modal } from '../src/ui.js';
+import { mountDemo } from '../src/demo.js';
+import { byId } from '../database/exercises.js';
+import { disposeTree } from '../src/lifecycle.js';
 const assert=(ok,msg)=>{if(!ok)throw Error(msg);};
 const wait=async (fn,msg)=>{for(let i=0;i<200;i++){const v=fn();if(v)return v;await new Promise(r=>setTimeout(r,25));}throw Error(msg);};
 export async function runChecks(){

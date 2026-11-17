@@ -1,15 +1,15 @@
 // Regression tests for the review findings on the reliability changes.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { openStore, memoryBackend, localBackend, migrateLegacy } from '../js/db.js';
-import { exportAll, validateBackup } from '../js/backup.js';
-import { makeEntry } from '../js/workout.js';
-import { buildCustomPlan, editableWeeks } from '../js/plans.js';
-import { PLANS } from '../data/plans.js';
-import { app, initState } from '../js/state.js';
-import { savePlan } from '../js/plan-store.js';
-import { saveQueue } from '../js/save-queue.js';
-import { revertDelta } from '../js/lifecycle.js';
+import { openStore, memoryBackend, localBackend, migrateLegacy } from '../src/db.js';
+import { exportAll, validateBackup } from '../src/backup.js';
+import { makeEntry } from '../src/workout.js';
+import { buildCustomPlan, editableWeeks } from '../src/plans.js';
+import { PLANS } from '../database/plans.js';
+import { app, initState } from '../src/state.js';
+import { savePlan } from '../src/plan-store.js';
+import { saveQueue } from '../src/save-queue.js';
+import { revertDelta } from '../src/lifecycle.js';
 
 function storage() {
   const data = new Map();
@@ -92,8 +92,8 @@ test('revertDelta steps back over a freshly pushed entry or across a back/forwar
   assert.equal(revertDelta({ idx: 5 }, 4), -1);    // user pressed Forward once
 });
 
-import { targetLow, newSession, addSet, finalizeSession } from '../js/workout.js';
-import { importAll } from '../js/backup.js';
+import { targetLow, newSession, addSet, finalizeSession } from '../src/workout.js';
+import { importAll } from '../src/backup.js';
 
 test('free-form targets only prefill positive reps within the backup schema limit', () => {
   for (const target of ['1000001', '9'.repeat(40), '0', 'AMRAP', '9'.repeat(400)]) {

@@ -1,6 +1,6 @@
-// Plans persistence + active-plan state. Custom plans live in the 'plans' store; built-ins in data/plans.js.
+// Plans persistence + active-plan state. Custom plans live in the 'plans' store; built-ins in database/plans.js.
 import { app } from './state.js';
-import { PLANS, builtInPlan } from '../data/plans.js';
+import { PLANS, builtInPlan } from '../database/plans.js';
 import { startPlan, skip, currentDay } from './plans.js';
 import { startWorkout } from './repo.js';
 

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   toDisplay, fromDisplay, fmtW, parseNum, epley, bestSet, lastPerformance,
   sessionVolume, detectPRs, weeklySummary,
-} from '../js/model.js';
+} from '../src/model.js';
 
 const S = (w, r, done = true) => ({ w, r, done });
 const sess = (id, date, exercises) => ({ id, date, endedAt: date + 3600e3, exercises });
@@ -136,7 +136,7 @@ test('weeklySummary: streak survives an empty current week, breaks on a gap', ()
   assert.equal(w.streakWeeks, 2);
 });
 
-import { prLabel, setLabel } from '../js/model.js';
+import { prLabel, setLabel } from '../src/model.js';
 test('prLabel formats weight, e1rm, reps and seconds PRs', () => {
   assert.equal(prLabel({ exId: 'bench-press', type: 'weight', value: fromDisplay(225, 'lb') }, 'lb'), 'Barbell Bench Press: 225 lb');
   assert.equal(prLabel({ exId: 'bench-press', type: 'e1rm', value: 100 }, 'kg'), 'Barbell Bench Press: est. 1RM 100 kg');

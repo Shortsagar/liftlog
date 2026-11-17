@@ -1,6 +1,6 @@
 // Exercise library: every exercise with its form animation.
 import { h, pageHead } from '../ui.js';
-import { EXERCISES, muscleLabel } from '../../data/exercises.js';
+import { EXERCISES, muscleLabel } from '../../database/exercises.js';
 import { createFigure } from '../figure.js';
 import { openDemo } from '../demo.js';
 import { onLeave } from '../lifecycle.js';

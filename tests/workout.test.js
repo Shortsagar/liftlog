@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { newSession, addSet, targetLow, finalizeSession } from '../js/workout.js';
-import { openStore, memoryBackend } from '../js/db.js';
+import { newSession, addSet, targetLow, finalizeSession } from '../src/workout.js';
+import { openStore, memoryBackend } from '../src/db.js';
 
 const S = (w, r, done = true) => ({ w, r, done });
 const hist = [{ id: 'old', date: 1000, endedAt: 2000, exercises: [
@@ -64,7 +64,7 @@ test('draft survives reload (re-opened store returns identical draft)', async ()
   assert.deepEqual(await db2.kvGet('draft', null), draft);
 });
 
-import { propagate, stepBase } from '../js/workout.js';
+import { propagate, stepBase } from '../src/workout.js';
 test('propagate copies a new value down to later undone sets that matched the old value', () => {
   const sets = [S(null, 8, false), S(null, 8, false), S(50, 8, false), S(null, 8, true)];
   const changed = propagate(sets, 0, 'w', null, 60);

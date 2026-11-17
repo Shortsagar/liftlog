@@ -40,7 +40,7 @@ try {
   for(let i=0;i<100;i++){if(await evaluate('location.pathname')==='/tests/runner')break;await new Promise(r=>setTimeout(r,50));}
   await send('Page.enable');
   await send('Emulation.setDeviceMetricsOverride',{width:1100,height:1400,deviceScaleFactor:1,mobile:false});
-  const {EXERCISES} = await import('../data/exercises.js');
+  const {EXERCISES} = await import('../database/exercises.js');
   const machinesOnly = process.argv.includes('--machines');
   const review = machinesOnly ? EXERCISES.filter(e=>e.anim.machine) : EXERCISES;
   const prefix = machinesOnly ? 'machine-review-' : 'animation-review-';
@@ -63,8 +63,8 @@ try {
   const light=await send('Page.captureScreenshot',{format:'png'});
   await writeFile(join(tmpdir(),'animation-review-light.png'),Buffer.from(light.data,'base64'));
   await evaluate(`(async()=>{
-    const {createFigure}=await import('/js/figure.js');
-    const {EXERCISES}=await import('/data/exercises.js');
+    const {createFigure}=await import('/src/figure.js');
+    const {EXERCISES}=await import('/database/exercises.js');
     for(const ex of EXERCISES){
       const fig=createFigure(ex,{autoplay:true});document.body.append(fig.el);
       const before=fig.el.innerHTML;fig.frame(0);
@@ -81,7 +81,7 @@ try {
     await evaluate(`(async()=>{
       document.documentElement.dataset.theme='dark';
       const root=document.createElement('div');root.id='overlay-root';document.body.append(root);
-      const {openDemo}=await import('/js/demo.js');const {byId}=await import('/data/exercises.js');
+      const {openDemo}=await import('/src/demo.js');const {byId}=await import('/database/exercises.js');
       openDemo(byId('leg-press'));
       document.querySelector('.modal .figure').__fig.pause();
       if(!document.querySelector('.machine-guide')?.textContent.includes('footplate'))throw Error('Missing machine recognition guide');

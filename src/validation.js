@@ -1,4 +1,4 @@
-import { byId } from '../data/exercises.js';
+import { byId } from '../database/exercises.js';
 export const finite = (v, min = 0, max = Number.MAX_SAFE_INTEGER) => typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max;
 export const integer = (v, min, max) => Number.isInteger(v) && finite(v, min, max);
 export const record = v => !!v && typeof v === 'object' && !Array.isArray(v);

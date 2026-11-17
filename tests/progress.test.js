@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { exerciseSeries, bestEver, exercisesSummary, weeklyVolumes, movingAverage, niceTicks, makeSampleHistory } from '../js/progress.js';
-import { weekStart, detectPRs } from '../js/model.js';
+import { exerciseSeries, bestEver, exercisesSummary, weeklyVolumes, movingAverage, niceTicks, makeSampleHistory } from '../src/progress.js';
+import { weekStart, detectPRs } from '../src/model.js';
 
 const S = (w, r, done = true) => ({ w, r, done });
 const DAY = 86400e3;

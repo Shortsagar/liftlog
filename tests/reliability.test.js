@@ -1,17 +1,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { openStore, memoryBackend, localBackend } from '../js/db.js';
-import { exportAll, importAll, validateBackup } from '../js/backup.js';
-import { buildCustomPlan, validatePlanForm } from '../js/plans.js';
-import { PLANS } from '../data/plans.js';
-import { makeEntry } from '../js/workout.js';
-import { lastPerformance, detectPRs } from '../js/model.js';
-import { localDate } from '../js/validation.js';
-import { latestRunner, onDispose, disposeTree } from '../js/lifecycle.js';
-import { saveQueue } from '../js/save-queue.js';
-import { app, initState } from '../js/state.js';
-import { savePlan } from '../js/plan-store.js';
-import { saveSession } from '../js/repo.js';
+import { openStore, memoryBackend, localBackend } from '../src/db.js';
+import { exportAll, importAll, validateBackup } from '../src/backup.js';
+import { buildCustomPlan, validatePlanForm } from '../src/plans.js';
+import { PLANS } from '../database/plans.js';
+import { makeEntry } from '../src/workout.js';
+import { lastPerformance, detectPRs } from '../src/model.js';
+import { localDate } from '../src/validation.js';
+import { latestRunner, onDispose, disposeTree } from '../src/lifecycle.js';
+import { saveQueue } from '../src/save-queue.js';
+import { app, initState } from '../src/state.js';
+import { savePlan } from '../src/plan-store.js';
+import { saveSession } from '../src/repo.js';
 
 function storage() {
   const data = new Map();
@@ -119,7 +119,7 @@ test('view resource disposal traverses children and runs once', () => {
   onDispose(leaf,()=>count++); disposeTree(root); disposeTree(root); assert.equal(count,1);
 });
 
-import { migrateLegacy } from '../js/db.js';
+import { migrateLegacy } from '../src/db.js';
 test('legacy migration is claimed once, preserves existing scoped records and resumes safely', async () => {
   const legacy=memoryBackend(), first=memoryBackend(), second=memoryBackend();
   await legacy.put('sessions',{id:'old',name:'Legacy'});

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { samplePose, forwardKinematics, legIK, DIMS, lerpAngle, normalizeKeyframes } from '../js/rig.js';
+import { samplePose, forwardKinematics, legIK, DIMS, lerpAngle, normalizeKeyframes } from '../src/rig.js';
 
 const near = (a, b, eps = 0.01) => assert.ok(Math.abs(a - b) < eps, `${a} ≉ ${b}`);
 const dist = (p, q) => Math.hypot(p.x - q.x, p.y - q.y);
@@ -62,7 +62,7 @@ test('legIK returns angles that land the ankle on target with the knee in front'
   assert.ok(j.knee.x > (hip.x + ankle.x) / 2, 'knee should bend forward');
 });
 
-import { posedJoints } from '../js/rig.js';
+import { posedJoints } from '../src/rig.js';
 test('a pinned hand stays on its target through the whole clip', () => {
   const anim = {
     anchor: { joint: 'toe', x: 30, y: 180 },

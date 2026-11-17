@@ -6,7 +6,7 @@ for display, so switching lb ↔ kg never changes history or creates false PRs.
 
 Stores: `sessions`, `plans` (custom plans only), `bodyweight`, `kv` (key → value).
 
-## Exercise — `data/exercises.js` (read-only library, edit the file to change it)
+## Exercise — `database/exercises.js` (read-only library, edit the file to change it)
 
 ```js
 {
@@ -22,7 +22,7 @@ Stores: `sessions`, `plans` (custom plans only), `bodyweight`, `kv` (key → val
 }
 ```
 
-### Animation (figure rig, `js/rig.js`)
+### Animation (figure rig, `src/rig.js`)
 
 ```js
 {
@@ -40,7 +40,7 @@ Pose angles are degrees in screen space: **0 = up, 90 = forward (the figure face
 `uArm2 fArm2 thigh2 shin2 foot2` (default to the near side). Clips loop from the last keyframe back to the
 first with cosine easing. Preview while editing: `tools/anim-preview.html`.
 
-## Plan — `data/plans.js` (built-in) and store `plans` (custom)
+## Plan — `database/plans.js` (built-in) and store `plans` (custom)
 
 ```js
 {

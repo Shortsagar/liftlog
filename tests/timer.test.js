@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { remainingSec, adjustEnd } from '../js/timer-core.js';
+import { remainingSec, adjustEnd } from '../src/timer-core.js';
 
 test('remainingSec rounds up and never goes negative', () => {
   assert.equal(remainingSec({ endsAt: 10_500 }, 10_000), 1);

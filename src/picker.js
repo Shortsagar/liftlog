@@ -1,6 +1,6 @@
 // Exercise picker sheet with search.
 import { h, modal } from './ui.js';
-import { EXERCISES, muscleLabel } from '../data/exercises.js';
+import { EXERCISES, muscleLabel } from '../database/exercises.js';
 
 const EQUIP = { barbell: 'Barbell', dumbbell: 'Dumbbell', cable: 'Cable', machine: 'Machine', bodyweight: 'Bodyweight' };
 

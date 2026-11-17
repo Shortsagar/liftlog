@@ -27,7 +27,7 @@ test('every precached path exists on disk', () => {
 
 test('every app file is precached (so the app works offline)', () => {
   const list = new Set(precache().map(p => p.replace(/^\.\//, '')));
-  const files = ['index.html', 'manifest.webmanifest', ...walk('js'), ...walk('css'), ...walk('data'), ...walk('icons')]
+  const files = ['index.html', 'manifest.webmanifest', ...walk('src'), ...walk('database'), ...walk('icons')]
     .map(f => relative(ROOT, join(ROOT, f)));
   for (const f of files) assert.ok(list.has(f), `${f} is not in sw.js PRECACHE`);
 });

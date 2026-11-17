@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { openStore, memoryBackend } from '../js/db.js';
-import { exportAll, importAll, validateBackup } from '../js/backup.js';
+import { openStore, memoryBackend } from '../src/db.js';
+import { exportAll, importAll, validateBackup } from '../src/backup.js';
 
 async function seeded() {
   const db = await openStore(memoryBackend());

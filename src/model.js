@@ -1,5 +1,5 @@
 // Pure workout logic — no DOM, no storage. Weights are kg internally.
-import { byId } from '../data/exercises.js';
+import { byId } from '../database/exercises.js';
 
 export const LB = 0.45359237; // kg per lb
 const round = (n, dp = 2) => Math.round(n * 10 ** dp) / 10 ** dp;

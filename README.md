@@ -115,8 +115,8 @@ The first visit downloads and caches the whole app, about 300 KB. After that it 
 
 | What | Where |
 |---|---|
-| Exercises, muscles, cues and **form animations** | `data/exercises.js` (one file; the ANIMATIONS section is at the bottom) |
-| Built-in plans | `data/plans.js` |
+| Exercises, muscles, cues and **form animations** | `database/exercises.js` (one file; the ANIMATIONS section is at the bottom) |
+| Built-in plans | `database/plans.js` |
 | Data model reference | `SCHEMA.md` |
 | Preview every animation at 4 points in the rep | open `http://localhost:8080/tools/anim-preview.html` (add `?ex=squat,deadlift` to filter) |
 | Regenerate the icons | `npm run icons` |
@@ -129,18 +129,21 @@ Adding an exercise means adding one `ex(...)` entry plus an `ANIMATIONS['your-id
 
 ```
 index.html, manifest.webmanifest, sw.js   app shell, install manifest, offline cache
-css/app.css                               all styles (dark default, light theme)
-data/exercises.js  data/plans.js          the editable library and starter plans
-js/app.js          router, tab bar, service worker registration
-js/db.js           transactional IndexedDB / localStorage / in-memory storage
-js/model.js        units, Epley 1RM, PR detection, weekly summary (pure)
-js/workout.js      building/finishing sessions, pre-fill (pure)
-js/plans.js        plan progression (pure)      js/progress.js  charts data, sample history (pure)
-js/rig.js          figure kinematics + IK (pure) js/figure.js    SVG renderer for the rig
-js/chart.js        SVG line/bar charts           js/backup.js    validated, atomic export/import
-js/views/*.js      one file per screen
-tests/             node --test suites
-tools/             dev server, icon generator, sw builder, dist builder, animation preview
+icons/                                    app icons
+src/                                      all app code
+  css/app.css                             all styles (dark default, light theme)
+  app.js         router, tab bar, service worker registration
+  db.js          transactional IndexedDB / localStorage / in-memory storage
+  model.js       units, Epley 1RM, PR detection, weekly summary (pure)
+  workout.js     building/finishing sessions, pre-fill (pure)
+  plans.js       plan progression (pure)        progress.js  charts data, sample history (pure)
+  rig.js         figure kinematics + IK (pure)  figure.js    SVG renderer for the rig
+  chart.js       SVG line/bar charts            backup.js    validated, atomic export/import
+  views/*.js     one file per screen
+database/exercises.js  database/plans.js  the editable library and starter plans
+tests/                                    node --test suites
+tools/                                    dev server, icon generator, sw builder, dist builder, animation preview
+Obsidian-Vault/                           private project notes (git-ignored, never published)
 ```
 
 The localStorage backend stores one atomic JSON snapshot and uses Web Locks when available to coordinate windows. On older browsers without Web Locks, use one app window at a time. Its cost grows with history size; IndexedDB is preferred. Service-worker freshness tests are read-only (`node tools/build-sw.mjs --check`).
