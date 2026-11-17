@@ -367,3 +367,5 @@ a.chip { text-decoration: none; }
   background: var(--accent); color: var(--accent-ink); box-shadow: 0 6px 20px #0007;
 }
 .backup-nudge { border-color: var(--warn) !important; }
+
+.storage-warning { padding: 12px 16px; background: var(--warn); color: #15181d; font-weight: 700; }

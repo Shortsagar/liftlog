@@ -1,8 +1,8 @@
 // Boot + hash router + tab bar.
-import { h, icon } from './ui.js';
+import { h, icon, toast, closeModals } from './ui.js';
 import { app, initState, applyTheme } from './state.js';
 import * as rest from './timer.js';
-import './plan-store.js'; // registers plan advancement on workout save
+import { leaveView, disposeTree, latestRunner, revertDelta } from './lifecycle.js';
 
 const TABS = [
   ['#/today', 'Today', 'today'],
@@ -27,31 +27,55 @@ const ROUTES = [
   [/^#\/settings$/, () => import('./views/settings.js')],
 ];
 
-let cleanup = null;
-export function onLeave(fn) { cleanup = fn; }
-
-async function route() {
+const runLatest = latestRunner();
+let renderedHash = location.hash || '#/today';
+let renderedIdx = -1;        // history index of the entry currently on screen (stored in history.state)
+let revertPending = false;   // the next hashchange is our own step back after a blocked navigation
+function route() {
   const hash = location.hash || '#/today';
-  if (cleanup) { try { cleanup(); } catch (e) { console.error(e); } cleanup = null; }
-  const root = document.getElementById('app');
-  const match = ROUTES.find(([re]) => re.test(hash));
-  if (!match) { location.replace('#/today'); return; }
-  const params = hash.match(match[0]).slice(1).map(v => (v == null ? v : decodeURIComponent(v)));
-  try {
-    const mod = await match[1]();
-    const node = await mod.render(...params);
-    root.replaceChildren(node);
-  } catch (e) {
-    console.error(e);
-    root.replaceChildren(h('div', { class: 'empty' }, h('h2', {}, 'Something went wrong'), h('p', {}, String(e.message || e))));
-  }
-  updateTabs(hash);
-  window.scrollTo(0, 0);
+  if (revertPending && hash === renderedHash) { revertPending = false; return Promise.resolve(); }
+  return runLatest(async current => {
+    try { await leaveView(); }
+    catch (e) {
+      // Step back to the entry still on screen rather than rewriting the new one,
+      // which would leave a duplicate entry and make the next Back tap do nothing.
+      const delta = revertDelta(history.state, renderedIdx);
+      if (delta) { revertPending = true; history.go(delta); }
+      toast('Your changes could not be saved. Retry or export before leaving.', { ms: 6000 });
+      return;
+    }
+    if (!current()) return;
+    closeModals();
+    const root = document.getElementById('app');
+    const match = ROUTES.find(([re]) => re.test(hash));
+    if (!match) { location.replace('#/today'); return; }
+    try {
+      const params = hash.match(match[0]).slice(1).map(v => v == null ? v : decodeURIComponent(v));
+      const mod = await match[1]();
+      if (!current()) return;
+      const node = await mod.render(...params);
+      if (!current()) { await leaveView(); disposeTree(node); return; }
+      disposeTree(root);
+      root.replaceChildren(node);
+      renderedHash = hash;
+      renderedIdx = Number.isInteger(history.state?.idx) ? history.state.idx : renderedIdx + 1;
+      if (history.state?.idx !== renderedIdx) history.replaceState({ ...(history.state || {}), idx: renderedIdx }, '', location.href);
+      await updateTabs(hash);
+      window.scrollTo(0, 0);
+    } catch (e) {
+      console.error(e);
+      if (!current()) return;
+      await leaveView().catch(() => {});
+      disposeTree(root);
+      root.replaceChildren(h('div', { class: 'empty' }, h('h2', {}, 'Something went wrong'), h('p', {}, String(e.message || e))));
+    }
+  });
 }
 
 export async function updateTabs(hash = location.hash) {
   const draft = await app.db.kvGet('draft', null);
   document.body.classList.toggle('logging', !!draft);
+  if (hash !== (location.hash || '#/today')) return;
   const nav = document.getElementById('tabs');
   nav.replaceChildren(...TABS.map(([href, label, ic]) => {
     const active = hash.startsWith(href) ||
@@ -80,7 +104,12 @@ function registerSW() {
     document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); });
   }).catch(e => console.warn('Service worker registration failed', e));
   let reloading = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => { if (!reloading) { reloading = true; location.reload(); } });
+  navigator.serviceWorker.addEventListener('controllerchange', async () => {
+    if (reloading) return;
+    reloading = true;
+    try { await leaveView(); location.reload(); }
+    catch { reloading = false; toast('Update downloaded. Save or export your workout before reloading.', { ms: 6000 }); }
+  });
 }
 
 /** Ask the browser not to evict our data (important on iOS). Granted silently for installed apps on most browsers. */
@@ -91,11 +120,15 @@ export async function requestPersistence() {
 async function boot() {
   await initState();
   applyTheme();
-  rest.restore();
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+  await rest.restore();
+  if (app.db.kind === 'memory') document.body.prepend(h('div', { class: 'storage-warning', role: 'alert' }, 'Temporary storage only: your workouts will be lost when this app closes. Export a backup before leaving.'));
   window.addEventListener('hashchange', route);
   await route();
   registerSW();
   if ((await app.db.all('sessions')).length && navigator.storage?.persisted && !(await navigator.storage.persisted())) requestPersistence();
 }
 
-boot();
+boot().catch(e => {
+  document.getElementById('app').replaceChildren(h('div', { class: 'empty' }, h('h1', {}, 'Storage could not be opened'), h('p', {}, e.message), h('p', {}, 'Your stored data has not been reset. Close other LiftLog windows and retry.'), h('button', { class: 'btn primary', onClick: () => location.reload() }, 'Retry')));
+});

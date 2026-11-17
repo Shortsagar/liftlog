@@ -1,3 +1,4 @@
+import { integer, validExerciseTarget } from './validation.js';
 // Plan progression (pure). Active plan state:
 // { planId, week, day, startedAt, done: [{week, day, sessionId}], completedAt }
 // week/day are 0-based pointers to the next workout.
@@ -17,6 +18,7 @@ export function currentDay(plan, active) {
 const cmp = (a, b) => a.week - b.week || a.day - b.day;
 
 function nextPos(plan, pos) {
+  if (!plan.weeks[pos.week]?.days[pos.day]) return null;
   if (pos.day + 1 < plan.weeks[pos.week].days.length) return { week: pos.week, day: pos.day + 1 };
   if (pos.week + 1 < plan.weeks.length) return { week: pos.week + 1, day: 0 };
   return null; // finished
@@ -48,22 +50,34 @@ export function progress(plan, active) {
 }
 
 /** Form → plan. A custom plan is one week of template days repeated `weeks` times. */
-export function buildCustomPlan({ id, name, weeks, days, summary = '' }) {
+export function buildCustomPlan({ id, name, weeks, days, templateWeeks, summary = '' }) {
+  const errors = validatePlanForm({ name, weeks, days, templateWeeks });
+  if (errors.length) throw new Error(errors.join('; '));
   const tmpl = days.map((d, i) => ({
     name: (d.name || '').trim() || `Day ${i + 1}`,
     exercises: d.exercises.map(e => ({ exId: e.exId, sets: Math.max(1, Number(e.sets) || 1), reps: String(e.reps || '').trim() || '8-12' })),
   }));
   return {
     id, name: name.trim(), summary, builtIn: false, daysPerWeek: tmpl.length,
-    weeks: Array.from({ length: weeks }, () => ({ days: tmpl.map(d => ({ ...d, exercises: d.exercises.map(e => ({ ...e })) })) })),
+    weeks: Array.from({ length: weeks }, (_, i) => ({ days: (templateWeeks ? templateWeeks[i % templateWeeks.length].days : tmpl).map(d => ({ ...d, exercises: d.exercises.map(e => ({ ...e })) })) })),
   };
 }
 
-export function validatePlanForm({ name, weeks, days }) {
+export function validatePlanForm({ name, weeks, days, templateWeeks }) {
   const errs = [];
   if (!name || !name.trim()) errs.push('Give the plan a name');
-  if (!(weeks >= 1 && weeks <= 52)) errs.push('Weeks must be between 1 and 52');
+  if (!integer(weeks, 1, 52)) errs.push('Weeks must be between 1 and 52');
   if (!days.length) errs.push('Add at least one day');
   days.forEach((d, i) => { if (!d.exercises.length) errs.push(`"${d.name || `Day ${i + 1}`}" has no exercises`); });
+  const allWeeks = templateWeeks || [{ days }];
+  for (const w of allWeeks) {
+    if (!Array.isArray(w.days) || w.days.length > 14 || (templateWeeks && w.days.length < 1)) errs.push('Use 1–14 days per week');
+    else for (const d of w.days) {
+      if (!Array.isArray(d.exercises) || (templateWeeks && !d.exercises.length) || d.exercises.length > 100 || !d.exercises.every(validExerciseTarget)) errs.push('Each day needs 1–100 exercises with 1–100 whole sets and a valid rep target');
+    }
+  }
   return errs;
 }
+
+/** Deep copy for editing. Built-in plans reuse the same day objects across weeks; this breaks that sharing. */
+export const editableWeeks = weeks => JSON.parse(JSON.stringify(weeks));

@@ -1,6 +1,6 @@
 # LiftLog data model
 
-All data lives on the device in IndexedDB (database `liftlog`, falls back to localStorage).
+All data lives on the device in IndexedDB (database `liftlog` at the origin root, or `liftlog:<encoded installation path>` in a subdirectory; uses localStorage when IndexedDB is absent).
 Every record has a string `id`. **Weights are always stored in kilograms** (floats) and converted
 for display, so switching lb ↔ kg never changes history or creates false PRs.
 
@@ -50,7 +50,7 @@ first with cosine easing. Preview while editing: `tools/anim-preview.html`.
   weeks: [ { days: [ { name: 'Push 1', exercises: [ { exId: 'bench-press', sets: 4, reps: '6-8' } ] } ] } ],
 }
 ```
-`reps` is a number or a string: `5`, `"8-12"`, `"30s"`. Custom plans repeat one template week.
+`reps` is a number or a string: `5`, `"8-12"`, `"30s"`. New custom plans repeat one template week. Copies and edits preserve a multiweek schedule. Schedule changes to an active plan or a draft-referenced plan create a new plan ID, preserving existing references.
 
 ## Active plan — `kv['activePlan']`
 
@@ -81,7 +81,7 @@ Saved sessions keep only completed sets. Estimated 1RM = Epley: `w × (1 + r/30)
 
 ## In-progress workout — `kv['draft']`
 Same shape as a Session with `endedAt: null`; each exercise also carries `last` (the sets from the previous
-time, used for "Last: 135 × 8" and pre-fill). Saved on every change so a refresh or crash loses nothing.
+time, used for "Last: 135 × 8" and pre-fill). Queued for persistence on every change. The UI indicates when persistence completes and exposes retry/export recovery on failure.
 
 ## Rest timer — `kv['rest']`
 `{ endsAt: ms, total: sec }` — absolute end time so it survives locking the phone or reloading.
@@ -101,4 +101,4 @@ time, used for "Last: 135 × 8" and pre-fill). Saved on every change so a refres
 ```js
 { app: 'liftlog', version: 1, exportedAt: ms, sessions: [...], plans: [...], bodyweight: [...], kv: [...] }
 ```
-Import validates the whole file before replacing anything; an invalid file changes nothing.
+Import validates nested structures, IDs, limits and active-plan references before replacing anything. All stores are replaced in one transaction; any failure preserves the original records. Internal `kv` keys beginning with `__` contain installation migration metadata and are neither exported nor replaced on import. Ordinary single-record mutations and workout completion also use transactions.

@@ -1,3 +1,4 @@
+import { disposeTree } from '../lifecycle.js';
 // Progress tab: overview (week, plan, volume, body), history, exercises.
 import { h, icon, pageHead, fmtDate, fmtDuration } from '../ui.js';
 import { app } from '../state.js';
@@ -20,6 +21,7 @@ export async function render() {
   const draw = () => {
     tabs.replaceChildren(...[['overview', 'Overview'], ['history', 'History'], ['exercises', 'Exercises']].map(([k, label]) =>
       h('button', { role: 'tab', 'aria-selected': String(tab === k), 'aria-pressed': String(tab === k), onClick: () => { tab = k; draw(); } }, label)));
+    disposeTree(body);
     body.replaceChildren(tab === 'overview' ? overview(sessions, ctx, bw) : tab === 'history' ? history(sessions) : exercises(sessions));
   };
   draw();

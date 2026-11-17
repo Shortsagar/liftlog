@@ -1,21 +1,30 @@
 // The logging screen — the hot path. Keep it fast: no full re-render on typing.
-import { h, icon, modal, confirmDialog, fmtDuration, toast } from '../ui.js';
+import { h, icon, modal, confirmDialog, fmtDuration, toast, saveJSONFile } from '../ui.js';
 import { app, weightInc, go } from '../state.js';
-import { byId, muscleLabel } from '../../data/exercises.js';
+import { byId } from '../../data/exercises.js';
 import { toDisplay, fromDisplay, parseNum, detectPRs, setLabel, bestSet } from '../model.js';
 import { addSet, makeEntry, finalizeSession, targetLow, defaultTarget, propagate, stepBase } from '../workout.js';
 import * as rest from '../timer.js';
 import { pickExercise } from '../picker.js';
 import { allSessions, saveSession, getDraft, setDraft } from '../repo.js';
-import { onLeave, updateTabs } from '../app.js';
+import { onLeave, disposeTree } from '../lifecycle.js';
+import { saveQueue } from '../save-queue.js';
+import { exportAll, backupFilename } from '../backup.js';
 import { mountDemo } from '../demo.js';
 
 let draft = null;
-let saveT = null;
 let listEl = null;
-
-const save = () => { clearTimeout(saveT); saveT = setTimeout(flush, 300); };
-function flush() { clearTimeout(saveT); saveT = null; if (draft) setDraft(draft); }
+let saving = false;
+let saveStatus;
+const writes = saveQueue(setDraft, message => { if (saveStatus) saveStatus.textContent = message; }, { delay: 300 });
+const save = () => { if (draft) writes.save(draft); };
+function flush() { return writes.flush(); }
+async function recoverDraft() {
+  const backup = await exportAll(app.db);
+  backup.kv = backup.kv.filter(x => x.id !== 'draft');
+  backup.kv.push({ id: 'draft', value: structuredClone(draft) });
+  if (await saveJSONFile(backup, backupFilename())) toast('Backup with this workout saved');
+}
 const round2 = n => Math.round(n * 100) / 100;
 
 export async function render() {
@@ -24,15 +33,18 @@ export async function render() {
 
   const clock = h('div', { class: 'clock' }, fmtDuration((Date.now() - draft.date) / 1000));
   const clockId = setInterval(() => { clock.textContent = fmtDuration((Date.now() - draft.date) / 1000); }, 1000);
-  const onHide = () => { if (document.hidden) flush(); };
+  const onHide = () => { if (document.hidden) flush().catch(() => {}); };
+  const onPageHide = () => flush().catch(() => {});
   document.addEventListener('visibilitychange', onHide);
-  window.addEventListener('pagehide', flush);
-  onLeave(() => {
-    clearInterval(clockId); flush();
+  window.addEventListener('pagehide', onPageHide);
+  onLeave(async () => {
+    await flush();
+    clearInterval(clockId);
     document.removeEventListener('visibilitychange', onHide);
-    window.removeEventListener('pagehide', flush);
+    window.removeEventListener('pagehide', onPageHide);
   });
 
+  saveStatus = h('span', { role: 'status', class: 'small' }, 'Saved');
   const title = h('input', { value: draft.name, 'aria-label': 'Workout name', onInput: e => { draft.name = e.target.value; save(); } });
   listEl = h('div', { class: 'ex-list' });
   drawList();
@@ -41,6 +53,7 @@ export async function render() {
     h('div', { class: 'log-head' },
       h('div', { class: 'title' }, title, clock),
       h('button', { class: 'btn primary sm', onClick: finish }, 'Finish')),
+    h('div', { class: 'row', style: { marginBottom: '12px' } }, saveStatus, h('button', { class: 'btn sm', onClick: () => { save(); return flush(); } }, 'Retry save'), h('button', { class: 'btn sm', onClick: recoverDraft }, 'Export backup')),
     listEl,
     h('button', { class: 'btn block', style: { marginTop: '12px' }, onClick: addExercise }, icon('plus'), 'Add exercise'),
     h('div', { class: 'field', style: { marginTop: '16px' } },
@@ -66,6 +79,7 @@ async function startEmpty() {
 }
 
 function drawList() {
+  disposeTree(listEl);
   listEl.replaceChildren(...draft.exercises.map((e, i) => card(e, i)));
   if (!draft.exercises.length) listEl.append(h('div', { class: 'card empty' }, 'Add your first exercise below.'));
 }
@@ -110,18 +124,18 @@ function card(e, i) {
 
 function redrawCard(i) {
   const old = listEl.children[i];
-  if (old) old.replaceWith(card(draft.exercises[i], i));
+  if (old) { disposeTree(old); old.replaceWith(card(draft.exercises[i], i)); }
 }
 
 function stepper({ value, step, placeholder, mode, label, field, onChange, base }) {
   const input = h('input', { type: 'text', inputmode: mode, value: value ?? '', placeholder, 'aria-label': label,
     enterkeyhint: 'done', autocomplete: 'off', dataset: { field } });
-  input.addEventListener('input', () => onChange(parseNum(input.value)));
+  input.addEventListener('input', () => { const n = parseNum(input.value); onChange(n !== null && n <= 1e6 ? n : null); });
   input.addEventListener('focus', () => input.select());
   input.addEventListener('keydown', ev => { if (ev.key === 'Enter') input.blur(); });
   const bump = d => {
     const cur = parseNum(input.value) ?? base();
-    const n = Math.max(0, round2(cur + d));
+    const n = Math.min(1e6, Math.max(0, round2(cur + d)));
     input.value = String(n);
     onChange(n);
   };
@@ -182,7 +196,7 @@ function setRow(e, s, j, ex) {
 function setMenu(e, j) {
   const i = draft.exercises.indexOf(e);
   const close = modal(h('div', { class: 'stack' },
-    h('button', { class: 'btn block', onClick: () => { e.sets.splice(j + 1, 0, { ...e.sets[j], done: false }); save(); redrawCard(i); close(); } }, 'Duplicate set'),
+    h('button', { class: 'btn block', onClick: () => { if (e.sets.length >= 100) { toast('Maximum 100 sets'); return; } e.sets.splice(j + 1, 0, { ...e.sets[j], done: false }); save(); redrawCard(i); close(); } }, 'Duplicate set'),
     h('button', { class: 'btn danger block', onClick: () => { e.sets.splice(j, 1); save(); redrawCard(i); close(); } }, icon('trash'), `Remove set ${j + 1}`)),
   { title: `Set ${j + 1}` });
 }
@@ -192,7 +206,7 @@ function exMenu(i) {
   const ex = byId(e.exId);
   const close = modal(h('div', { class: 'stack' },
     h('button', { class: 'btn block', onClick: async () => { close(); await swap(i); } }, icon('swap'), 'Swap exercise'),
-    h('a', { class: 'btn block', href: `#/exercise/${e.exId}`, onClick: () => { flush(); close(); } }, 'History & progress'),
+    h('a', { class: 'btn block', href: `#/exercise/${e.exId}`, onClick: () => { close(); } }, 'History & progress'),
     i > 0 ? h('button', { class: 'btn block', onClick: () => { move(i, -1); close(); } }, 'Move up') : null,
     i < draft.exercises.length - 1 ? h('button', { class: 'btn block', onClick: () => { move(i, 1); close(); } }, 'Move down') : null,
     h('button', { class: 'btn danger block', onClick: async () => {
@@ -214,7 +228,7 @@ async function swap(i) {
   const id = await pickExercise({ title: 'Swap for…', exclude: [old.exId] });
   if (!id) return;
   const sessions = await allSessions();
-  const target = { sets: old.target?.sets || old.sets.length, reps: byId(id)?.metric === byId(old.exId)?.metric ? old.target?.reps : defaultTarget(id).reps };
+  const target = { sets: old.target?.sets || old.sets.length || 1, reps: byId(id)?.metric === byId(old.exId)?.metric ? (old.target?.reps || defaultTarget(id).reps) : defaultTarget(id).reps };
   const fresh = makeEntry(id, target, sessions);
   // keep set count the user already had
   while (fresh.sets.length < old.sets.length) addSet(fresh);
@@ -232,34 +246,43 @@ async function addExercise() {
   listEl.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-async function discard() {
-  if (!await confirmDialog('Discard this workout? Logged sets will be lost.', { ok: 'Discard', danger: true })) return;
-  clearTimeout(saveT);
+async function clearDraft() {
+  await writes.flush().catch(() => {});
+  await app.db.atomic(['kv'], tx => { tx.put('kv', { id: 'draft', value: null }); tx.put('kv', { id: 'rest', value: null }); });
   draft = null;
-  await setDraft(null);
-  rest.stop();
-  await updateTabs('#/log');
-  go('#/today');
+  rest.stop({ persist: false });
+  // Reset a previously rejected queue after an intentional discard.
+  writes.reset();
 }
-
+async function discard() {
+  if (saving) return;
+  saving = true;
+  try {
+    if (!await confirmDialog('Discard this workout? Logged sets will be lost.', { ok: 'Discard', danger: true })) return;
+    await clearDraft();
+    go('#/today');
+  } finally { saving = false; }
+}
 async function finish() {
-  flush();
-  const all = draft.exercises.flatMap(e => e.sets);
-  const done = all.filter(s => s.done && s.r > 0).length;
-  if (!done) {
-    if (await confirmDialog('No sets are checked off yet. Discard this workout?', { ok: 'Discard', danger: true })) {
-      draft = null; await setDraft(null); rest.stop(); await updateTabs('#/log'); go('#/today');
+  if (saving || !draft) return;
+  saving = true;
+  const log = listEl.closest('.log');
+  try {
+    const all = draft.exercises.flatMap(e => e.sets);
+    const done = all.filter(s => s.done && s.r > 0).length;
+    if (!done) {
+      if (await confirmDialog('No sets are checked off yet. Discard this workout?', { ok: 'Discard', danger: true })) { await clearDraft(); go('#/today'); }
+      return;
     }
-    return;
-  }
-  const undone = all.length - done;
-  if (undone && !await confirmDialog(`${undone} unchecked set${undone > 1 ? 's' : ''} won't be saved. Finish workout?`, { ok: 'Finish' })) return;
-  const session = finalizeSession(draft);
-  session.prs = detectPRs(session, await allSessions());
-  await saveSession(session);
-  clearTimeout(saveT);
-  draft = null;
-  await setDraft(null);
-  rest.stop();
-  go(`#/session/${session.id}/new`);
+    const undone = all.length - done;
+    if (undone && !await confirmDialog(`${undone} unchecked set${undone > 1 ? 's' : ''} won't be saved. Finish workout?`, { ok: 'Finish' })) return;
+    log.inert = true;
+    save(); await flush();
+    const session = finalizeSession(draft);
+    session.prs = detectPRs(session, await allSessions());
+    await saveSession(session);
+    draft = null;
+    rest.stop({ persist: false });
+    go(`#/session/${session.id}/new`);
+  } finally { saving = false; log.inert = false; }
 }

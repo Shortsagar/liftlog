@@ -3,7 +3,7 @@ import { h, pageHead } from '../ui.js';
 import { EXERCISES, muscleLabel } from '../../data/exercises.js';
 import { createFigure } from '../figure.js';
 import { openDemo } from '../demo.js';
-import { onLeave } from '../app.js';
+import { onLeave } from '../lifecycle.js';
 
 export async function render() {
   const figs = [];

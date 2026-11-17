@@ -1,5 +1,5 @@
 // Rest timer (bottom sheet) + beep/vibrate. State persisted in kv 'rest' as {endsAt, total}.
-import { h, icon, fmtDuration } from './ui.js';
+import { h, icon, fmtDuration, reportError } from './ui.js';
 import { app } from './state.js';
 import { remainingSec, adjustEnd } from './timer-core.js';
 
@@ -74,7 +74,7 @@ function tick() {
 function finish() {
   clearInterval(tickId); tickId = null;
   state = null;
-  app.db.kvSet('rest', null);
+  app.db.kvSet('rest', null).catch(reportError);
   timeEl.textContent = 'Go!';
   labelEl.textContent = 'Rest over';
   sheet.classList.add('done');
@@ -100,21 +100,22 @@ function run() {
 
 export function start(sec = app.settings.restSec) {
   state = { endsAt: Date.now() + sec * 1000, total: sec };
-  app.db.kvSet('rest', state);
+  app.db.kvSet('rest', state).catch(reportError);
   run();
 }
 
 export function adjust(delta) {
   if (!state) return;
   state = adjustEnd(state, delta);
-  app.db.kvSet('rest', state);
+  app.db.kvSet('rest', state).catch(reportError);
   render();
 }
 
-export function stop() {
+export function stop({ persist = true } = {}) {
+  clearTimeout(hideTimer);
   clearInterval(tickId); tickId = null;
   state = null;
-  app.db.kvSet('rest', null);
+  if (persist) app.db.kvSet('rest', null).catch(reportError);
   hide();
 }
 
@@ -124,6 +125,6 @@ export const isRunning = () => !!state;
 export async function restore() {
   const saved = await app.db.kvGet('rest', null);
   if (saved && saved.endsAt > Date.now()) { state = saved; run(); }
-  else if (saved) app.db.kvSet('rest', null);
+  else if (saved) app.db.kvSet('rest', null).catch(reportError);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
 }

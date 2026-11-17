@@ -7,6 +7,8 @@
     "start": "python3 tools/serve.py 8080",
     "build-sw": "node tools/build-sw.mjs",
     "icons": "node tools/make-icons.mjs",
-    "dist": "node tools/dist.mjs"
+    "dist": "node tools/dist.mjs",
+    "test:browser": "node tools/browser-test.mjs",
+    "test:server": "python3 -B tests/server_test.py"
   }
 }

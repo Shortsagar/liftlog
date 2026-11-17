@@ -1,3 +1,4 @@
+import { onDispose } from './lifecycle.js';
 // Form demo block: animated figure + target muscles + cues. Tap the figure to enlarge.
 import { h, icon, modal } from './ui.js';
 import { muscleLabel } from '../data/exercises.js';
@@ -39,6 +40,7 @@ export function openDemo(ex) {
 export function mountDemo(el, ex) {
   if (app.settings.showDemos === false || !ex.anim) { el.append(musclesLine(ex)); return; }
   const fig = createFigure(ex);
+  onDispose(el, () => fig.destroy());
   const stage = h('button', { class: 'demo-fig', type: 'button', 'aria-label': `Enlarge ${ex.name} form demo`, onClick: () => openDemo(ex) }, fig.el);
   el.append(h('div', { class: 'demo' },
     h('div', { class: 'demo-figwrap' }, stage, playBtn(fig)),

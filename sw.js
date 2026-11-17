@@ -1,7 +1,8 @@
 // LiftLog service worker: precaches the whole app so it runs fully offline.
 // VERSION and PRECACHE are maintained by tools/build-sw.mjs — run it after changing app files.
-const VERSION = '12e3b44079';
-const CACHE = `liftlog-${VERSION}`;
+const VERSION = '9d8328705e';
+const CACHE_PREFIX = `liftlog-${encodeURIComponent(self.registration.scope)}-`;
+const CACHE = `${CACHE_PREFIX}${VERSION}`;
 const PRECACHE = [
   './',
   './index.html',
@@ -14,6 +15,7 @@ const PRECACHE = [
   './js/db.js',
   './js/demo.js',
   './js/figure.js',
+  './js/lifecycle.js',
   './js/model.js',
   './js/picker.js',
   './js/plan-store.js',
@@ -21,10 +23,12 @@ const PRECACHE = [
   './js/progress.js',
   './js/repo.js',
   './js/rig.js',
+  './js/save-queue.js',
   './js/state.js',
   './js/timer-core.js',
   './js/timer.js',
   './js/ui.js',
+  './js/validation.js',
   './js/views/body.js',
   './js/views/exercise.js',
   './js/views/library.js',
@@ -52,7 +56,15 @@ self.addEventListener('install', event => {
 
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
-    for (const key of await caches.keys()) if (key.startsWith('liftlog-') && key !== CACHE) await caches.delete(key);
+    for (const key of await caches.keys()) {
+      if (key.startsWith(CACHE_PREFIX) && key !== CACHE) await caches.delete(key);
+      // Caches from before per-installation names ("liftlog-<hash>"): delete only if every
+      // entry belongs to this installation, so another install's offline copy survives.
+      else if (/^liftlog-[0-9a-f]{10}$/.test(key)) {
+        const reqs = await (await caches.open(key)).keys();
+        if (reqs.every(r => r.url.startsWith(self.registration.scope))) await caches.delete(key);
+      }
+    }
     await self.clients.claim();
   })());
 });
@@ -67,6 +79,11 @@ self.addEventListener('fetch', event => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
+  const scope = new URL(self.registration.scope);
+  const appNavigation = url.pathname === scope.pathname || url.pathname === scope.pathname + 'index.html';
+  if (req.mode === 'navigate' && !appNavigation) return;
+  const precached = PRECACHE.some(p => new URL(p, scope).pathname === url.pathname);
+  if (req.mode !== 'navigate' && !precached) return;
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);
     if (req.mode === 'navigate') {
@@ -76,7 +93,7 @@ self.addEventListener('fetch', event => {
     if (hit) return hit;
     try {
       const res = await fetch(req);
-      if (res.ok) cache.put(req, res.clone());
+      if (res.ok) await cache.put(req, res.clone());
       return res;
     } catch (e) {
       return new Response('Offline', { status: 503, statusText: 'Offline' });

@@ -1,3 +1,4 @@
+import { validExerciseTarget } from './validation.js';
 // Building and finalizing workout sessions (pure).
 import { lastPerformance } from './model.js';
 import { byId } from '../data/exercises.js';
@@ -18,6 +19,7 @@ export function defaultTarget(exId) {
 /** One exercise entry, prefilled from history (else target reps, blank weight). */
 export function makeEntry(exId, target, sessions) {
   target = target || defaultTarget(exId);
+  if (!validExerciseTarget({ exId, ...target })) throw new Error('Invalid exercise target: use 1–100 sets and a valid rep target');
   const last = lastPerformance(sessions, exId);
   const n = target.sets || last?.length || 3;
   const sets = [];
@@ -42,6 +44,7 @@ export function newSession(spec, sessions, now = Date.now()) {
 }
 
 export function addSet(entry) {
+  if (entry.sets.length >= 100) throw new Error('Maximum 100 sets per exercise');
   const prev = entry.sets[entry.sets.length - 1];
   entry.sets.push(prev ? { w: prev.w, r: prev.r, done: false } : { w: null, r: targetLow(entry.target?.reps), done: false });
   return entry;

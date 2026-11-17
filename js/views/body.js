@@ -1,3 +1,4 @@
+import { localDate } from '../validation.js';
 // Body weight log with trend chart.
 import { h, icon, pageHead, fmtDate, toast, confirmDialog } from '../ui.js';
 import { app, go } from '../state.js';
@@ -19,8 +20,8 @@ export async function render() {
   const save = async () => {
     const v = parseNum(wIn.value);
     if (v == null || v < 20 || v > 700) { toast(`Enter a weight in ${unit}`); wIn.focus(); return; }
-    const [y, m, d] = dIn.value.split('-').map(Number);
-    const date = new Date(y, m - 1, d, 8).getTime();
+    const date = localDate(dIn.value);
+    if (date === null) { toast('Enter a valid date no later than today'); dIn.focus(); return; }
     await app.db.put('bodyweight', { id: newId(), date, kg: fromDisplay(v, unit) });
     toast('Weight logged');
     go('#/body');

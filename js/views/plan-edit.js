@@ -3,7 +3,7 @@ import { h, icon, pageHead, toast } from '../ui.js';
 import { go } from '../state.js';
 import { byId } from '../../data/exercises.js';
 import { getPlan, savePlan, activate } from '../plan-store.js';
-import { buildCustomPlan, validatePlanForm } from '../plans.js';
+import { buildCustomPlan, validatePlanForm, editableWeeks } from '../plans.js';
 import { pickExercise } from '../picker.js';
 import { newId } from '../workout.js';
 import { defaultTarget } from '../workout.js';
@@ -22,9 +22,13 @@ export async function render(param) {
     form = {
       name: copy ? `${src.name} (custom)` : src.name, summary: src.summary || '',
       weeks: src.weeks.length,
-      days: src.weeks[0].days.map(d => ({ name: d.name, exercises: d.exercises.map(e => ({ ...e })) })),
+      templateWeeks: editableWeeks(src.weeks),
+      days: [],
     };
   }
+
+  if (form.templateWeeks) form.days = form.templateWeeks[0].days;
+  const weekPicker = form.templateWeeks ? h('select', { class: 'input', 'aria-label': 'Week to edit', onChange: e => { form.days = form.templateWeeks[Number(e.target.value)].days; drawDays(); } }, ...form.templateWeeks.map((_, i) => h('option', { value: i }, `Week ${i + 1}`))) : null;
 
   const daysEl = h('div');
   const errEl = h('div', { class: 'form-errors', role: 'alert' });
@@ -53,8 +57,9 @@ export async function render(param) {
     errEl.replaceChildren(...errs.map(e => h('div', {}, e)));
     if (errs.length) { errEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
     const plan = await savePlan(buildCustomPlan({ id, ...form }));
+    if (plan.id !== id && !startNow) toast('Saved as a revised copy; your active workout schedule is preserved', { ms: 4500 });
     if (startNow) { await activate(plan); toast(`Started ${plan.name}`); go('#/today'); }
-    else { toast('Plan saved'); go(`#/plan/${encodeURIComponent(plan.id)}`); }
+    else { if (plan.id === id) toast('Plan saved'); go(`#/plan/${encodeURIComponent(plan.id)}`); }
   };
 
   return h('div', {},
@@ -64,8 +69,9 @@ export async function render(param) {
         h('input', { id: 'pname', class: 'input', value: form.name, placeholder: 'e.g. My 4-day split', onInput: e => { form.name = e.target.value; } })),
       h('div', { class: 'field' }, h('label', { for: 'pweeks' }, 'Length (weeks)'),
         h('input', { id: 'pweeks', class: 'input', inputmode: 'numeric', value: form.weeks, onInput: e => { form.weeks = Number(e.target.value); } })),
-      h('p', { class: 'small muted', style: { margin: 0 } }, 'Set up one week of training days. It repeats for every week of the plan.')),
+      h('p', { class: 'small muted', style: { margin: 0 } }, form.templateWeeks ? 'Edit each week separately. Added weeks repeat the existing schedule. Saving schedule changes to an active plan creates a revised copy.' : 'Set up one week of training days. It repeats for every week of the plan.')),
     h('div', { class: 'section-title' }, 'Training days'),
+    weekPicker,
     daysEl,
     h('button', { class: 'btn block', style: { marginTop: '12px' }, onClick: () => { form.days.push({ name: `Day ${form.days.length + 1}`, exercises: [] }); drawDays(); } }, icon('plus'), 'Add day'),
     errEl,

@@ -44,7 +44,7 @@ const byDateDesc = (a, b) => b.date - a.date;
 
 /** Completed sets from the most recent session containing exId. */
 export function lastPerformance(sessions, exId) {
-  for (const s of [...sessions].sort(byDateDesc)) {
+  for (const s of [...sessions].filter(s => !s.sample).sort(byDateDesc)) {
     for (const e of s.exercises || []) {
       if (e.exId !== exId) continue;
       const d = doneSets(e.sets);
@@ -81,7 +81,7 @@ export function detectPRs(session, priorSessions) {
     if (!cur) continue;
     let prev = null;
     for (const p of priorSessions) {
-      if (p.id === session.id) continue;
+      if (p.id === session.id || (!session.sample && p.sample)) continue;
       for (const pe of p.exercises || []) {
         if (pe.exId !== e.exId) continue;
         const st = exStats(pe.sets, e.exId);

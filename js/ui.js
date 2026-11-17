@@ -6,7 +6,9 @@ function build(ns, tag, attrs, kids) {
   const el = ns ? document.createElementNS(ns, tag) : document.createElement(tag);
   for (const [k, v] of Object.entries(attrs || {})) {
     if (v == null || v === false) continue;
-    if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2).toLowerCase(), v);
+    if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2).toLowerCase(), event => {
+      try { Promise.resolve(v(event)).catch(reportError); } catch (e) { reportError(e); }
+    });
     else if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
     else if (k === 'dataset') Object.assign(el.dataset, v);
     else if (k === 'html') el.innerHTML = v;
@@ -60,6 +62,8 @@ export function icon(name, attrs = {}) {
   h('path', { d: ICONS[name] || '' }));
 }
 
+export function reportError(e) { console.error(e); toast(e?.message || 'The change could not be saved. Please retry.', { ms: 6000 }); }
+
 // ── Toasts ──
 let toastWrap;
 export function toast(msg, { ms = 2200, cls = '' } = {}) {
@@ -70,17 +74,40 @@ export function toast(msg, { ms = 2200, cls = '' } = {}) {
 }
 
 // ── Modal (bottom sheet) ──
+const openModals = [];
+export function closeModals() { for (const close of [...openModals].reverse()) close(); }
 export function modal(content, { title, center = false, onClose } = {}) {
   const root = document.getElementById('overlay-root');
-  const close = () => { back.remove(); document.removeEventListener('keydown', onKey); onClose && onClose(); };
-  const onKey = e => { if (e.key === 'Escape') close(); };
-  const box = h('div', { class: `modal ${center ? 'center' : ''}`, role: 'dialog', 'aria-modal': 'true', 'aria-label': title || 'Dialog' },
-    title ? h('div', { class: 'modal-head' }, h('h2', {}, title),
-      h('button', { class: 'icon-btn', 'aria-label': 'Close', onClick: close }, icon('x'))) : null,
-    content);
+  const previousFocus = document.activeElement;
+  const background = [...document.body.children].filter(el => el !== root).map(el => [el, el.inert]);
+  for (const [el] of background) el.inert = true;
+  const previousModal = root.lastElementChild;
+  if (previousModal) previousModal.inert = true;
+  let closed = false;
+  const close = () => {
+    if (closed) return; closed = true;
+    back.remove(); document.removeEventListener('keydown', onKey);
+    openModals.splice(openModals.indexOf(close), 1);
+    for (const [el, inert] of background) el.inert = inert;
+    if (previousModal) previousModal.inert = false;
+    if (previousFocus?.isConnected) previousFocus.focus();
+    onClose?.();
+  };
+  const onKey = e => {
+    if (openModals.at(-1) !== close) return;
+    if (e.key === 'Escape') { e.preventDefault(); close(); }
+    if (e.key !== 'Tab') return;
+    const targets = [...box.querySelectorAll('button, a[href], input, select, textarea, [tabindex]')].filter(el => !el.disabled && el.tabIndex >= 0 && el.getClientRects().length);
+    const first = targets[0] || box, last = targets.at(-1) || box;
+    if (e.shiftKey && (document.activeElement === first || document.activeElement === box)) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && (document.activeElement === last || !box.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
+  };
+  const box = h('div', { class: `modal ${center ? 'center' : ''}`, role: 'dialog', tabindex: -1, 'aria-modal': 'true', 'aria-label': title || 'Dialog' },
+    title ? h('div', { class: 'modal-head' }, h('h2', {}, title), h('button', { class: 'icon-btn', 'aria-label': 'Close', onClick: close }, icon('x'))) : null, content);
   const back = h('div', { class: 'modal-back', onClick: e => { if (e.target === back) close(); } }, box);
-  document.addEventListener('keydown', onKey);
-  root.append(back);
+  openModals.push(close);
+  document.addEventListener('keydown', onKey); root.append(back);
+  (box.querySelector('button, input, select, textarea, a[href]') || box).focus();
   return close;
 }
 
@@ -113,3 +140,19 @@ export function fmtDate(ms, opts = { weekday: 'short', month: 'short', day: 'num
   return new Date(ms).toLocaleDateString(undefined, opts);
 }
 export const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+/** Save a JSON backup the way the platform handles best: the share sheet on phones (iOS installed
+ *  apps often ignore blob downloads), a download link elsewhere. Resolves false if the user cancelled. */
+export async function saveJSONFile(data, name) {
+  const json = JSON.stringify(data);
+  const file = typeof File !== 'undefined' ? new File([json], name, { type: 'application/json' }) : null;
+  if (file && navigator.canShare?.({ files: [file] }) && /iPhone|iPad|Android/i.test(navigator.userAgent)) {
+    try { await navigator.share({ files: [file], title: 'LiftLog backup' }); return true; }
+    catch (e) { if (e.name === 'AbortError') return false; }
+  }
+  const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+  const a = h('a', { href: url, download: name });
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  return true;
+}

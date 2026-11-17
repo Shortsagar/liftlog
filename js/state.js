@@ -23,8 +23,12 @@ export async function initState(backend) {
 }
 
 export async function saveSettings(patch) {
-  Object.assign(app.settings, patch);
-  await app.db.kvSet('settings', app.settings);
+  const next = await app.db.atomic(['kv'], tx => {
+    const settings = { ...DEFAULT_SETTINGS, ...tx.get('kv', 'settings')?.value, ...patch };
+    tx.put('kv', { id: 'settings', value: settings });
+    return settings;
+  }, { keys: { kv: ['settings'] } });
+  Object.assign(app.settings, next);
   applyTheme();
 }
 

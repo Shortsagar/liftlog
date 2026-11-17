@@ -6,7 +6,7 @@ import { exportAll, importAll, validateBackup } from '../js/backup.js';
 async function seeded() {
   const db = await openStore(memoryBackend());
   await db.put('sessions', { id: 's1', date: 1, name: 'A', exercises: [] });
-  await db.put('plans', { id: 'custom-1', name: 'Mine', weeks: [] });
+  await db.put('plans', { id: 'custom-1', name: 'Mine', weeks: [{ days: [{ name: 'Day 1', exercises: [{ exId: 'squat', sets: 3, reps: '5' }] }] }] });
   await db.put('bodyweight', { id: 'b1', date: 2, kg: 80 });
   await db.kvSet('settings', { unit: 'kg' });
   await db.kvSet('activePlan', { planId: 'upper-lower', week: 2, day: 1, done: [] });

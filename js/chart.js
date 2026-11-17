@@ -1,3 +1,4 @@
+import { onDispose } from './lifecycle.js';
 // Small dependency-free SVG charts: line (multi-series, one y-axis) and bar (single series).
 // Charts size themselves to their container (ResizeObserver) and ship a tap/hover tooltip.
 import { h, s } from './ui.js';
@@ -18,9 +19,11 @@ function frame(container, height, draw) {
     w = nw;
     svgHost.replaceChildren(draw(w, height, tip));
   };
-  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(render).observe(container);
-  requestAnimationFrame(render);
-  setTimeout(render, 30); // fallback when frames are paused (background tab)
+  const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(render) : null;
+  observer?.observe(container);
+  const frameId = requestAnimationFrame(render);
+  const timerId = setTimeout(render, 30);
+  onDispose(container, () => { observer?.disconnect(); cancelAnimationFrame(frameId); clearTimeout(timerId); }); // fallback when frames are paused (background tab)
 }
 
 function showTip(tip, x, y, w, lines) {

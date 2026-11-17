@@ -3,7 +3,7 @@
 A BodySpace-style workout tracker that runs entirely on your phone. It has no backend, no account, no API keys, and no network calls after the first load. It installs to your home screen and works in airplane mode.
 
 - **Plans:** 5 free starter plans (Full Body Beginner, Push/Pull/Legs, Upper/Lower 4-day, 5×5 Strength, Dumbbell-only Home), your own custom plans, and one-off workouts. "Today's workout" tracks which week and day you're on.
-- **Fast logging:** weight and reps steppers, a numeric keypad, sets pre-filled from last time ("Last: 135 × 8"), add/remove/swap, notes, an auto rest timer, and a workout clock. Every change is saved instantly, so a refresh or crash loses nothing.
+- **Fast logging:** weight and reps steppers, a numeric keypad, sets pre-filled from last time ("Last: 135 × 8"), add/remove/swap, notes, an auto rest timer, and a workout clock. Edits are saved within a fraction of a second (rapid typing is grouped into one write, and anything pending is written immediately when you leave the screen or switch apps). The log shows Saving, Saved, or a failure with retry and backup controls.
 - **Form guides:** a looping SVG figure for each of 31 exercises, with primary and secondary muscles highlighted and form cues. Tap to enlarge, with pause/play.
 - **Progress:** history, a per-exercise chart of top set and estimated 1RM (Epley), automatic PR detection with a little celebration, a weekly summary (workouts, volume, streak), plan progress, and a bodyweight trend.
 - **Your data:** stored on the device in IndexedDB, with a localStorage fallback. You can export and import a JSON backup.
@@ -21,11 +21,22 @@ python3 tools/serve.py 8080
 
 Open **http://localhost:8080**. (`npm start` does the same thing.) The dev server turns off browser caching, but the service worker still caches the app, as it does in production. After you edit files, see "Changing the app" below.
 
-Run the tests (about 80 of them, using Node's built-in test runner with nothing to install):
+Run the unit and regression tests using Node's built-in test runner, with nothing to install:
 
 ```bash
 npm test
 ```
+
+Additional checks:
+
+```bash
+npm run test:server
+npm run test:browser
+```
+
+Browser checks launch Chrome with a disposable profile and a loopback-only test server. They cover native IndexedDB transactions, logging/reload/finish, modal focus, plan customization, and an actual offline reload. On macOS the runner uses the installed Google Chrome; elsewhere it uses `chromium`. Set `CHROME_PATH` to override the executable. No browser-testing packages are required.
+
+The dev server binds only to this computer and serves app assets. To allow a phone on your local network to load the assets, explicitly run `python3 tools/serve.py 8080 --lan`. HTTPS is still needed for installation/offline support away from localhost.
 
 **To test offline:** load the app once, stop the server (Ctrl-C), then reload the page. Everything keeps working.
 
@@ -102,9 +113,12 @@ The first visit downloads and caches the whole app, about 300 KB. After that it 
 
 - Everything is stored **only on that phone**. Nothing is uploaded anywhere.
 - To back up, go to **Settings → Your data → Export backup**. On a phone this opens the share sheet, so save the file to Files, iCloud Drive, Google Drive, or email it to yourself. On a computer it downloads `liftlog-backup-YYYY-MM-DD.json`. Today's screen reminds you if you haven't backed up in 30 days.
-- To move to a new phone: install the app on the new phone, then go to **Settings → Import** and pick the backup file. Import checks the whole file first; a wrong or damaged file changes nothing.
+- To move to a new phone: install the app on the new phone, then go to **Settings → Import** and pick the backup file. Import validates nested records, numeric limits, unique IDs, settings, and plan progress before writing. Replacement is transactional: a failed restore leaves the original data intact.
 - **Storage protection:** Settings shows whether the browser has agreed not to clear your data. On iPhone, add the app to the Home Screen; Safari can wipe data for websites you haven't opened in 7 days, but not for installed apps. Keep backups anyway.
-- **Sample data:** **Settings → Load sample history** adds 8 weeks of tagged demo workouts so you can explore the charts. **Remove sample** deletes only those.
+- **Save failures:** the logging screen keeps unsaved edits in memory and blocks navigation until a save succeeds. Use **Retry save** or **Export backup** before closing. If persistence cannot be opened, startup displays a recovery error instead of silently presenting an empty database. If neither storage API exists, a prominent temporary-storage warning appears.
+- **Plan edits:** customizations preserve every week, including the alternating 5×5 schedule. Changing the schedule of an active plan or a plan referenced by a draft creates a revised copy. **Save** leaves the current plan intact; **Save & start plan** starts the revision from the beginning.
+- **Separate installations:** subdirectory installations now use separate databases and service-worker caches. On upgrade, the first installation to claim the legacy shared database copies it into its scoped database; the original remains available. Other installations can import an exported backup. Export/import is also the supported way to move data to a different URL.
+- **Sample data:** **Settings → Load sample history** adds 8 weeks of tagged demo workouts so you can explore the charts. **Remove sample** deletes only those. Sample workouts can appear in demonstration charts, but never supply weights or PR comparisons for real workouts.
 
 ### Phone limitations (these come from the platforms, not bugs)
 - **iPhone can't vibrate from web apps.** The rest timer beeps and flashes instead. The beep follows the ring/silent switch.
@@ -133,13 +147,15 @@ index.html, manifest.webmanifest, sw.js   app shell, install manifest, offline c
 css/app.css                               all styles (dark default, light theme)
 data/exercises.js  data/plans.js          the editable library and starter plans
 js/app.js          router, tab bar, service worker registration
-js/db.js           IndexedDB / localStorage / in-memory storage
+js/db.js           transactional IndexedDB / localStorage / in-memory storage
 js/model.js        units, Epley 1RM, PR detection, weekly summary (pure)
 js/workout.js      building/finishing sessions, pre-fill (pure)
 js/plans.js        plan progression (pure)      js/progress.js  charts data, sample history (pure)
 js/rig.js          figure kinematics + IK (pure) js/figure.js    SVG renderer for the rig
-js/chart.js        SVG line/bar charts           js/backup.js    export/import
+js/chart.js        SVG line/bar charts           js/backup.js    validated, atomic export/import
 js/views/*.js      one file per screen
 tests/             node --test suites
 tools/             dev server, icon generator, sw builder, dist builder, animation preview
 ```
+
+The localStorage backend stores one atomic JSON snapshot and uses Web Locks when available to coordinate windows. On older browsers without Web Locks, use one app window at a time. Its cost grows with history size; IndexedDB is preferred. Service-worker freshness tests are read-only (`node tools/build-sw.mjs --check`).
